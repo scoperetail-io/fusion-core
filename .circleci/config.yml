@@ -1,0 +1,123 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine.
+# See: https://circleci.com/docs/2.0/configuration-reference
+version: 2.1
+commands:
+  restore_cache_cmd:
+    description: "Restore Cache"
+    steps:
+      - restore_cache:
+          keys:
+            - v1-dependencies-$CIRCLE_PROJECT_REPONAME
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+            
+  save_cache_cmd:
+    description: "Save Cache"
+    steps:
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-$CIRCLE_PROJECT_REPONAME
+          
+  import_gpg_key:
+    description: "Import GPG Key needed for signing"
+    steps:
+      - run:
+          name: import GPG key
+          command: echo -e "$GPG_KEY" | gpg --import
+  mvn_package:
+    description: "Maven clean and package"
+    steps:
+      - run:
+          name: Package
+          command: mvn -B -DskipTests clean package -s .circleci/.circleci.settings.xml
+  mvn_test:
+    description: "Maven Test"
+    steps:
+      - run:
+          name: Test
+          command: mvn test -s .circleci/.circleci.settings.xml
+  mvn_release:
+    description: "Maven Release"
+    steps:
+      - run:
+          name: Release
+          command: |
+            git config --global user.email $GITHUB_USER_EMAIL
+            git config --global user.name $GITHUB_USER_NAME
+            RELEASE="Yes"
+            ADDITIONAL_PARAMS="--set-upstream origin $CIRCLE_BRANCH"
+            mvn -s .circleci/.circleci.settings.xml -Darguments="-DskipTests" -B release:prepare -Dmaven.test.skip=true
+            mvn help:evaluate -Dexpression=project.name -q -DforceStdout > app.txt
+            ls target/*.jar | grep -Eo "[[:digit:]]+.[[:digit:]]+" > version.txt
+            mvn -s .circleci/.circleci.settings.xml -Darguments="-DskipTests" -B release:perform -Dmaven.test.skip=true
+            
+            
+  mvn_sonar:
+    description: "Maven Sonar"
+    steps:
+      - run:
+          name: Verify and Sonar Scan
+          command: mvn sonar:sonar -s .circleci/.circleci.settings.xml
+
+  docker_buid_and_publish:
+    description: "Docker build & publish"
+    steps:
+      - setup_remote_docker:
+          version: 20.10.2
+          docker_layer_caching: true
+
+      # build and push Docker image
+      - run: 
+          name: "Docker build & publish"
+          command: |
+            APP_VERSION=$(cat version.txt)
+            APP_NAME=$(cat app.txt)
+            echo "APP_NAME = $APP_NAME , APP_VERSION = $APP_VERSION"
+            echo $DOCKER_PASS | docker login $DOCKER_REGISTRY -u $DOCKER_USER --password-stdin
+            docker build -f .circleci/Dockerfile -t $DOCKER_REGISTRY/$APP_NAME:$APP_VERSION .
+            docker push $DOCKER_REGISTRY/$APP_NAME:$APP_VERSION 
+          
+executors:
+  java11_executor:
+    docker:
+      - image: cimg/openjdk:11.0
+
+jobs:
+
+  build-and-test-java11:
+    executor: java11_executor
+    steps:
+      - checkout
+      - restore_cache_cmd
+      - mvn_package
+      - mvn_test
+      - mvn_sonar
+      - save_cache_cmd
+      
+  release-java11:
+    executor: java11_executor
+    steps:
+      - checkout
+      - restore_cache_cmd
+      - mvn_release
+      - docker_buid_and_publish
+      - save_cache_cmd
+  
+workflows:
+  build-and-test:
+    jobs:
+      - build-and-test-java11:
+          context: OSSRH
+          
+      - release-java11:
+          requires: 
+            - build-and-test-java11
+          context: 
+            - OSSRH
+            - DOCKER_SCOPERETAIL
+          filters:
+            branches:
+              only: 
+                - master
+                - main

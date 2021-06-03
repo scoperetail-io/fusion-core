@@ -1,0 +1,12 @@
+package com.scoperetail.fusion.core;
+
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.retry.annotation.EnableRetry;
+
+@Configuration
+@EnableRetry
+@ComponentScan("com.scoperetail.fusion")
+public class FusionCoreConfig {
+
+}
