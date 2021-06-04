@@ -3,7 +3,7 @@ package com.scoperetail.fusion.core.application.service.transform.template.engin
 import java.util.Map;
 
 public interface TemplateEngine {
-  String TEMPLATES = "TEMPLATES";
+  String TEMPLATES = "templates";
 
   String generateTextFromTemplate(String event, Map<String, Object> params, String templateName);
 
