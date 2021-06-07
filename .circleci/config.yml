@@ -7,18 +7,16 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - v1-dependencies-$CIRCLE_PROJECT_REPONAME
+            - v1-dependencies-{{ checksum "pom.xml" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
-            
   save_cache_cmd:
     description: "Save Cache"
     steps:
       - save_cache:
           paths:
             - ~/.m2
-          key: v1-dependencies-$CIRCLE_PROJECT_REPONAME
-          
+          key: v1-dependencies-{{ checksum "pom.xml" }}
   import_gpg_key:
     description: "Import GPG Key needed for signing"
     steps:
@@ -30,61 +28,35 @@ commands:
     steps:
       - run:
           name: Package
-          command: mvn -B -DskipTests clean package -s .circleci/.circleci.settings.xml
+          command: mvn -DskipTests clean package
   mvn_test:
     description: "Maven Test"
     steps:
       - run:
           name: Test
-          command: mvn test -s .circleci/.circleci.settings.xml
+          command: mvn test
   mvn_release:
     description: "Maven Release"
     steps:
       - run:
           name: Release
           command: |
-            git config --global user.email $GITHUB_USER_EMAIL
-            git config --global user.name $GITHUB_USER_NAME
-            RELEASE="Yes"
-            ADDITIONAL_PARAMS="--set-upstream origin $CIRCLE_BRANCH"
-            mvn -s .circleci/.circleci.settings.xml -Darguments="-DskipTests" -B release:prepare -Dmaven.test.skip=true
-            mvn help:evaluate -Dexpression=project.name -q -DforceStdout > app.txt
-            ls target/*.jar | grep -Eo "[[:digit:]]+.[[:digit:]]+" > version.txt
-            mvn -s .circleci/.circleci.settings.xml -Darguments="-DskipTests" -B release:perform -Dmaven.test.skip=true
-            
-            
+            git config --global user.email "tushar.agrawal@scoperetail.com"
+            git config --global user.name "scoperetail"
+            mvn -s .circleci/.maven.xml -Darguments="-DskipTests" -B release:prepare release:perform -Prelease
   mvn_sonar:
     description: "Maven Sonar"
     steps:
       - run:
           name: Verify and Sonar Scan
-          command: mvn sonar:sonar -s .circleci/.circleci.settings.xml
+          command: mvn sonar:sonar
 
-  docker_buid_and_publish:
-    description: "Docker build & publish"
-    steps:
-      - setup_remote_docker:
-          version: 20.10.2
-          docker_layer_caching: true
-
-      # build and push Docker image
-      - run: 
-          name: "Docker build & publish"
-          command: |
-            APP_VERSION=$(cat version.txt)
-            APP_NAME=$(cat app.txt)
-            echo "APP_NAME = $APP_NAME , APP_VERSION = $APP_VERSION"
-            echo $DOCKER_PASS | docker login $DOCKER_REGISTRY -u $DOCKER_USER --password-stdin
-            docker build -f .circleci/Dockerfile -t $DOCKER_REGISTRY/$APP_NAME:$APP_VERSION .
-            docker push $DOCKER_REGISTRY/$APP_NAME:$APP_VERSION 
-          
 executors:
   java11_executor:
     docker:
       - image: cimg/openjdk:11.0
 
 jobs:
-
   build-and-test-java11:
     executor: java11_executor
     steps:
@@ -94,30 +66,24 @@ jobs:
       - mvn_test
       - mvn_sonar
       - save_cache_cmd
-      
-  release-java11:
+  build-and-release-java11:
     executor: java11_executor
     steps:
       - checkout
+      - import_gpg_key
       - restore_cache_cmd
       - mvn_release
-      - docker_buid_and_publish
       - save_cache_cmd
-  
+
 workflows:
   build-and-test:
     jobs:
       - build-and-test-java11:
           context: OSSRH
-          
-      - release-java11:
-          requires: 
-            - build-and-test-java11
-          context: 
-            - OSSRH
-            - DOCKER_SCOPERETAIL
+      - build-and-release-java11:
+          context: OSSRH
           filters:
             branches:
               only: 
-                - master
-                - main
+                  - master
+                  - main
