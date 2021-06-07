@@ -21,7 +21,7 @@
 		<fusion-messaging.version>0.7</fusion-messaging.version>
 		<fusion-audit-persistence.version>0.8</fusion-audit-persistence.version>
 		<fusion-messaging-activemq.version>0.4</fusion-messaging-activemq.version>
-		<commons-time.version>0.5</commons-time.version>
+		<commons-time.version>0.7</commons-time.version>
 		<spring-retry.version>1.3.1</spring-retry.version>
 		<sonar.projectKey>scoperetail-io_fusion-core</sonar.projectKey>
 		<sonar.organization>scoperetail-io</sonar.organization>
@@ -239,7 +239,7 @@
 							Spotless can set copyright years by digging through git history (see "license" 
 							section below) -->
 						<licenseHeader>
-							<content>/* ScopeRetail (C)$YEAR */</content>  <!-- or <file>${basedir}/license-header</file> -->
+							<content></content>  <!-- or <file>${basedir}/license-header</file> -->
 						</licenseHeader>
 					</java>
 				</configuration>
