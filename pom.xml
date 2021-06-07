@@ -8,6 +8,8 @@
 	<version>0.1-SNAPSHOT</version>
 	<name>fusion-core</name>
 	<description>Routes the messages from source to target</description>
+	<url>https://github.com/scoperetail-io/fusion-core</url>
+
 	<properties>
 		<java.version>11</java.version>
 		<httpclient.version>4.5.13</httpclient.version>
@@ -16,14 +18,15 @@
 		<lombok.version>1.18.12</lombok.version>
 		<spotless.version>2.10.0</spotless.version>
 		<fusion-shared-kernel.version>0.6</fusion-shared-kernel.version>
-		<fusion-messaging.version>0.4</fusion-messaging.version>
+		<fusion-messaging.version>0.7</fusion-messaging.version>
 		<fusion-audit-persistence.version>0.8</fusion-audit-persistence.version>
-		<fusion-messaging-activemq.version>0.1</fusion-messaging-activemq.version>
-		<commons-time.version>0.5</commons-time.version>
+		<fusion-messaging-activemq.version>0.4</fusion-messaging-activemq.version>
+		<commons-time.version>0.7</commons-time.version>
 		<spring-retry.version>1.3.1</spring-retry.version>
-		<sonar.host.url>http://dev-ops.eastus2.cloudapp.azure.com/sonar/</sonar.host.url>
-		<sonar.login>scoperetail</sonar.login>
-		<sonar.password>scope2020!</sonar.password>
+		<sonar.projectKey>scoperetail-io_fusion-core</sonar.projectKey>
+		<sonar.organization>scoperetail-io</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+		<license-maven-plugin.version>2.0.0</license-maven-plugin.version>
 		<sonar.exclusions>
 			com/**/**Test**.java
 		</sonar.exclusions>
@@ -31,12 +34,31 @@
 		<sonar.jacoco.reportPath>${project.basedir}/target/jacoco.exec</sonar.jacoco.reportPath>
 		<sonar.language>java</sonar.language>
 	</properties>
+
 	<scm>
-		<developerConnection>
-			scm:git:git@github.com:scoperetail-io/fusion-orchestrator.git
-		</developerConnection>
+		<connection>scm:git:git@github.com:scoperetail-io/fusion-core.git</connection>
 		<tag>HEAD</tag>
+		<url>https://github.com/scoperetail-io/fusion-core</url>
 	</scm>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>Scoperetail</id>
+			<name>Scoperetail Development Team</name>
+			<roles>
+				<role>Project Lead</role>
+			</roles>
+		</developer>
+	</developers>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.scoperetail.fusion</groupId>
@@ -217,7 +239,7 @@
 							Spotless can set copyright years by digging through git history (see "license" 
 							section below) -->
 						<licenseHeader>
-							<content>/* ScopeRetail (C)$YEAR */</content>  <!-- or <file>${basedir}/license-header</file> -->
+							<content></content>  <!-- or <file>${basedir}/license-header</file> -->
 						</licenseHeader>
 					</java>
 				</configuration>
@@ -230,42 +252,95 @@
 					<scmCommentPrefix>[skip ci]</scmCommentPrefix>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>license-maven-plugin</artifactId>
+				<version>${license-maven-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>first</id>
+						<goals>
+							<goal>update-file-header</goal>
+						</goals>
+						<phase>process-sources</phase>
+					</execution>
+				</executions>
+				<configuration>
+					<verbose>false</verbose>
+					<licenseName>apache_v2</licenseName>
+					<organizationName>Scope Retail Systems Inc.</organizationName>
+					<projectName>${project.name}</projectName>
+					<inceptionYear>2018</inceptionYear>
+					<processStartTag>*****</processStartTag>
+					<sectionDelimiter>-----</sectionDelimiter>
+					<processEndTag>=====</processEndTag>
+					<roots>
+						<root>src/main/java</root>
+						<root>src/test/java</root>
+					</roots>
+					<extraExtensions>
+						<tsx>java</tsx>
+					</extraExtensions>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
-	<distributionManagement>
-		<repository>
-			<id>central</id>
-			<name>scope-artifactory-releases</name>
-			<url>http://scopeartifactory.centralus.cloudapp.azure.com/artifactory/maven-release</url>
-		</repository>
-		<snapshotRepository>
-			<id>snapshots</id>
-			<name>scope-artifactory-snapshots</name>
-			<url>http://scopeartifactory.centralus.cloudapp.azure.com/artifactory/maven-snapshots</url>
-		</snapshotRepository>
-	</distributionManagement>
-	<repositories>
-		<repository>
-			<id>spring-milestones</id>
-			<name>Spring Milestones</name>
-			<url>https://repo.spring.io/milestone</url>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>central</id>
-			<name>scope-artifactory-virtual</name>
-			<url>http://scopeartifactory.centralus.cloudapp.azure.com/artifactory/maven-virtual</url>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>maven-central</id>
-			<name>maven</name>
-			<url>https://repo.maven.apache.org/maven2/</url>
-		</repository>
-	</repositories>
 
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
+
+	<profiles>
+		<profile>
+			<id>release</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
