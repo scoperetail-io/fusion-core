@@ -15,10 +15,10 @@
 		<org.mapstruct.version>1.3.1.Final</org.mapstruct.version>
 		<lombok.version>1.18.12</lombok.version>
 		<spotless.version>2.10.0</spotless.version>
-		<fusion-shared-kernel.version>0.6</fusion-shared-kernel.version>
-		<fusion-messaging.version>0.7</fusion-messaging.version>
-		<fusion-audit-persistence.version>0.8</fusion-audit-persistence.version>
-		<fusion-messaging-activemq.version>0.4</fusion-messaging-activemq.version>
+		<fusion-shared-kernel.version>0.4</fusion-shared-kernel.version>
+		<fusion-messaging.version>0.4</fusion-messaging.version>
+		<fusion-audit-persistence.version>0.6</fusion-audit-persistence.version>
+		<fusion-messaging-activemq.version>0.2</fusion-messaging-activemq.version>
 		<commons-time.version>0.7</commons-time.version>
 		<spring-retry.version>1.3.1</spring-retry.version>
 		<sonar.projectKey>scoperetail-io_fusion-core</sonar.projectKey>
