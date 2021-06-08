@@ -84,6 +84,6 @@ workflows:
           context: OSSRH
           filters:
             branches:
-              only: 
-                  - master
-                  - main
+              only:
+                - master
+                - main
