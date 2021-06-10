@@ -233,12 +233,6 @@
 							<style>GOOGLE</style>
 						</googleJavaFormat>
 
-						<!-- make sure every file has the following copyright header. optionally, 
-							Spotless can set copyright years by digging through git history (see "license" 
-							section below) -->
-						<licenseHeader>
-							<content />  <!-- or <file>${basedir}/license-header</file> -->
-						</licenseHeader>
 					</java>
 				</configuration>
 			</plugin>
