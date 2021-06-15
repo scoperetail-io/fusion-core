@@ -31,9 +31,10 @@ import org.springframework.web.client.ResponseErrorHandler;
  */
 
 import lombok.extern.slf4j.Slf4j;
+import org.webjars.NotFoundException;
 
 @Slf4j
-public class CustomResponseErrorHandler implements ResponseErrorHandler {
+public class GenericRestResponseErrorHandler implements ResponseErrorHandler {
 
 	@Override
 	public boolean hasError(ClientHttpResponse clientHttpResponse) throws IOException {
@@ -52,9 +53,17 @@ public class CustomResponseErrorHandler implements ResponseErrorHandler {
 	@Override
 	public void handleError(URI url, HttpMethod method, ClientHttpResponse response) throws IOException {
 		String responseAsString = toString(response.getBody());
-		log.error("URL: {}, HttpMethod: {}, ResponseBody: {}", url, method, responseAsString);
-
-		throw new CustomException(responseAsString);
+		if (response.getStatusCode().series() == HttpStatus.Series.SERVER_ERROR) {
+			log.error("Server Error. URL: {}, HttpMethod: {}, ResponseBody: {}", url, method, responseAsString);
+		} else if(response.getStatusCode().series() == HttpStatus.Series.CLIENT_ERROR) {
+			log.error("Client Error. URL: {}, HttpMethod: {}, ResponseBody: {}", url, method, responseAsString);
+		} else if(response.getStatusCode() == HttpStatus.NOT_FOUND) {
+			log.error("Not Found Error. URL: {}, HttpMethod: {}, ResponseBody: {}", url, method, responseAsString);
+			throw new NotFoundException(responseAsString);
+		} else {
+			log.error("Generic Error. URL: {}, HttpMethod: {}, ResponseBody: {}", url, method, responseAsString);
+			throw new CustomException(responseAsString);
+		}
 	}
 
 	String toString(InputStream inputStream) {
