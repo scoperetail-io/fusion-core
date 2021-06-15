@@ -22,6 +22,8 @@ package com.scoperetail.fusion.core.adapter.out.web.http.impl;
  */
 
 import java.util.Map;
+
+import com.scoperetail.fusion.core.common.CustomResponseErrorHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -47,6 +49,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
     HttpComponentsClientHttpRequestFactory clientHttpRequestFactory =
         new HttpComponentsClientHttpRequestFactory(HttpClientBuilder.create().build());
     final RestTemplate restTemplate = new RestTemplate(clientHttpRequestFactory);
+    restTemplate.setErrorHandler(new CustomResponseErrorHandler());
     final ResponseEntity<String> exchange =
         restTemplate.exchange(url, HttpMethod.valueOf(methodType), httpEntity, String.class);
     log.trace("REST request sent to URL: {} and Response received is: {}", url, exchange);
