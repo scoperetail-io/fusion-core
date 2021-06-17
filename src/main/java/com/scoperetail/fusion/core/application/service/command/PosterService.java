@@ -28,6 +28,8 @@ package com.scoperetail.fusion.core.application.service.command;
 
 import static com.scoperetail.fusion.messaging.application.port.in.UsecaseResult.FAILURE;
 import static com.scoperetail.fusion.messaging.application.port.in.UsecaseResult.SUCCESS;
+import static com.scoperetail.fusion.messaging.config.Adapter.TransformationType.NONE;
+import static org.apache.commons.lang.StringUtils.EMPTY;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
@@ -81,6 +83,35 @@ class PosterService implements PosterUseCase {
   public void post(final String event, final Object domainEntity, final boolean isValid)
       throws Exception {
     handleEvent(event, domainEntity, isValid);
+  }
+
+  @Override
+  public String getHashKey(final String event, final Object domainEntity) {
+
+    final Optional<UseCaseConfig> optUseCase = fusionConfig.getUsecases().stream()
+        .filter(u -> u.getName().equals(event)).findFirst();
+
+    if (optUseCase.isPresent()) {
+      final UseCaseConfig useCase = optUseCase.get();
+      final String activeConfig = useCase.getActiveConfig();
+      final Optional<Config> optConfig = useCase.getConfigs().stream()
+          .filter(c -> activeConfig.equals(c.getName())).findFirst();
+      if (optConfig.isPresent()) {
+        final Config config = optConfig.get();
+        final Optional<Adapter> optAdapter = config.getAdapters().stream()
+            .filter(a -> !a.transformationType.equals(NONE)).findFirst();
+
+        if (optAdapter.isPresent()) {
+          final Adapter adapter = optAdapter.get();
+          final Transformer transformer = getTransformer(adapter.getTransformationType());
+          Map<String, Object> paramsMap = new HashMap<>();
+          paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
+          String hashKey = transformer.getHashKey(event, paramsMap, adapter.getTemplate());
+          return hashKey;
+        }
+      }
+    }
+    return EMPTY;
   }
 
   private void handleEvent(final String event, final Object domainEntity, final boolean isValid)
