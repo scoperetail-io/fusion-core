@@ -28,7 +28,6 @@ package com.scoperetail.fusion.core.adapter.out.web.http.impl;
  */
 
 import java.util.Map;
-
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
