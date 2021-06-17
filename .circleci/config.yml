@@ -16,6 +16,15 @@ workflows:
               ignore:
                 - master
                 - /HOTFIX-.*/
+      - marvel/sonar-scan:
+          context:
+            - OSSRH
+            - SLACK
+          filters:
+            branches:
+              ignore:
+                - master
+                - /HOTFIX-.*/
       - marvel/maven-release:
           context:
             - OSSRH
