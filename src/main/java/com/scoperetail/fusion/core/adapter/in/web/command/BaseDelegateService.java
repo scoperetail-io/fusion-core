@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.application.port.in.command.create;
+package com.scoperetail.fusion.core.adapter.in.web.command;
 
 /*-
  * *****
@@ -26,9 +26,23 @@ package com.scoperetail.fusion.core.application.port.in.command.create;
  * =====
  */
 
-public interface BaseDelegate {
+import com.scoperetail.fusion.core.adapter.out.persistence.jpa.DedupeJpaAdapter;
+import com.scoperetail.fusion.core.application.port.in.command.create.PosterUseCase;
+import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 
-	boolean isNotDuplicate(final Object domainEntity);
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
-	void dropOrder(Object domainEntity) throws Exception;
+@UseCase
+@AllArgsConstructor
+@NoArgsConstructor
+public class BaseDelegateService {
+
+	 private PosterUseCase posterUseCase;
+	 private DedupeJpaAdapter dedupeJpaAdapter;
+
+	 public boolean isNotDuplicate(final String eventName, final Object domainEntity) {
+	   String hashKey = posterUseCase.getHashKey(eventName, domainEntity);
+	   return dedupeJpaAdapter.isNotDuplicate(hashKey);
+	 }
 }

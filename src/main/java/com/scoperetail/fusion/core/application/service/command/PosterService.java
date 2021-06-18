@@ -100,14 +100,14 @@ class PosterService implements PosterUseCase {
         final Config config = optConfig.get();
         final Optional<Adapter> optAdapter = config.getAdapters().stream()
             .filter(a -> !a.transformationType.equals(NONE)).findFirst();
-
         if (optAdapter.isPresent()) {
           final Adapter adapter = optAdapter.get();
-          final Transformer transformer = getTransformer(adapter.getTransformationType());
           Map<String, Object> paramsMap = new HashMap<>();
           paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
-          String hashKey = transformer.getHashKey(event, paramsMap, adapter.getTemplate());
-          return hashKey;
+          if(adapter.getTransformationType() == TransformationType.DOMAIN_EVENT_FTL_TRANSFORMER)
+            return domainToDomainEventJsonFtlTransformer.getHashKey(event, paramsMap, adapter.getTemplate());
+          else if(adapter.getTransformationType() == TransformationType.DOMAIN_EVENT_VELOCITY_TRANSFORMER)
+            return domainToDomainEventJsonVelocityTransformer.getHashKey(event, paramsMap, adapter.getTemplate());
         }
       }
     }

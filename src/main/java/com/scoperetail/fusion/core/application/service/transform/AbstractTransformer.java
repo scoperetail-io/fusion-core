@@ -40,9 +40,4 @@ public abstract class AbstractTransformer implements Transformer {
       final String template) throws Exception{
     return templateEngine.generateTextFromTemplate(event, params, template);
   }
-
-  @Override
-  public String getHashKey(final String event, final Map<String, Object> params, final String template){
-    return templateEngine.generateTextFromTemplate(event, params, template);
-  }
 }

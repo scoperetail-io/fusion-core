@@ -38,8 +38,4 @@ public interface Transformer {
 			throws Exception {
 		return EMPTY;
 	}
-
-	default String getHashKey(final String event, final Map<String, Object> params, final String template) {
-		return EMPTY;
-	}
 }
