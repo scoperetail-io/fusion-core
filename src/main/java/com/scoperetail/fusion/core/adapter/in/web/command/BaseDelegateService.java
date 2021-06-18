@@ -26,21 +26,21 @@ package com.scoperetail.fusion.core.adapter.in.web.command;
  * =====
  */
 
+import com.scoperetail.fusion.core.adapter.in.web.BaseDelegate;
 import com.scoperetail.fusion.core.adapter.out.persistence.jpa.DedupeJpaAdapter;
 import com.scoperetail.fusion.core.application.port.in.command.create.PosterUseCase;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 
 @UseCase
 @AllArgsConstructor
-@NoArgsConstructor
-public class BaseDelegateService {
+public class BaseDelegateService implements BaseDelegate {
 
 	 private PosterUseCase posterUseCase;
 	 private DedupeJpaAdapter dedupeJpaAdapter;
 
+	 @Override
 	 public boolean isNotDuplicate(final String eventName, final Object domainEntity) {
 	   String hashKey = posterUseCase.getHashKey(eventName, domainEntity);
 	   return dedupeJpaAdapter.isNotDuplicate(hashKey);
