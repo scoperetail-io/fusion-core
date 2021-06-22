@@ -64,11 +64,6 @@ public abstract class AbstractDomainToDomainEventJsonTransformer extends Abstrac
     return result;
   }
 
-  public String getHashKey(final String event, final Map<String, Object> params, final String templateName) {
-    final String keyJson = templateEngine.generateTextFromTemplate(event, params, HASH_KEY_TEMPLATE);
-    return HashUtil.getHash(keyJson, HashUtil.SHA3_512);
-  }
-
   private Map<String, String> getkeyMap(final String keyJson) throws IOException {
     final Map<String, String> keyMap =
         JsonUtils.unmarshal(Optional.of(keyJson), Map.class.getCanonicalName());

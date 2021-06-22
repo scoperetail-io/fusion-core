@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.application.port.in.command.create;
+package com.scoperetail.fusion.core.application.service.transform.impl;
 
 /*-
  * *****
@@ -26,7 +26,12 @@ package com.scoperetail.fusion.core.application.port.in.command.create;
  * =====
  */
 
-public interface PosterUseCase {
+import com.scoperetail.fusion.core.application.service.transform.template.engine.FreemarkerTemplateEngine;
+import org.springframework.stereotype.Component;
 
-	void post(String event, Object domainEntity, boolean isValid) throws Exception;
+@Component
+public class DuplicateFtlTransformer extends DuplicateTransformer {
+  public DuplicateFtlTransformer(final FreemarkerTemplateEngine templateEngine) {
+    super(templateEngine);
+  }
 }

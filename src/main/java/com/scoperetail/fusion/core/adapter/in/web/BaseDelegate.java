@@ -27,5 +27,5 @@ package com.scoperetail.fusion.core.adapter.in.web;
  */
 
 public interface BaseDelegate {
-  boolean isNotDuplicate(final String eventName, final Object domainEntity);
+  boolean isNotDuplicate(final String eventName, final String templateName, final Object domainEntity);
 }

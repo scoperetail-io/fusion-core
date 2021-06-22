@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.application.port.in.command.create;
+package com.scoperetail.fusion.core.adapter.in.web.command;
 
 /*-
  * *****
@@ -26,7 +26,17 @@ package com.scoperetail.fusion.core.application.port.in.command.create;
  * =====
  */
 
-public interface PosterUseCase {
+import com.scoperetail.fusion.core.adapter.in.web.BaseDelegate;
+import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
+import lombok.AllArgsConstructor;
 
-	void post(String event, Object domainEntity, boolean isValid) throws Exception;
+@UseCase
+@AllArgsConstructor
+public abstract class AbstractBaseDelegate {
+  private static final String TEMPLATE_NAME = "hash_key";
+  private final BaseDelegate baseDelegate;
+
+  public boolean isNotDuplicate(String eventName, Object domainEntity) {
+    return baseDelegate.isNotDuplicate(eventName, TEMPLATE_NAME, domainEntity);
+  }
 }

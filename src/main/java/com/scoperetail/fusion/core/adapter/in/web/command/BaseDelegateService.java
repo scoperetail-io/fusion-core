@@ -28,21 +28,42 @@ package com.scoperetail.fusion.core.adapter.in.web.command;
 
 import com.scoperetail.fusion.core.adapter.in.web.BaseDelegate;
 import com.scoperetail.fusion.core.adapter.out.persistence.jpa.DedupeJpaAdapter;
-import com.scoperetail.fusion.core.application.port.in.command.create.PosterUseCase;
+import com.scoperetail.fusion.core.application.service.transform.Transformer;
+import com.scoperetail.fusion.core.application.service.transform.impl.DuplicateFtlTransformer;
+import com.scoperetail.fusion.core.application.service.transform.impl.DuplicateVelocityTransformer;
+import com.scoperetail.fusion.messaging.config.FusionConfig;
+import com.scoperetail.fusion.messaging.config.UseCaseConfig;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 
 import lombok.AllArgsConstructor;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 @UseCase
 @AllArgsConstructor
 public class BaseDelegateService implements BaseDelegate {
-
-	 private PosterUseCase posterUseCase;
-	 private DedupeJpaAdapter dedupeJpaAdapter;
+	private DuplicateFtlTransformer duplicateFtlTransformer;
+	private DuplicateVelocityTransformer duplicateVelocityTransformer;
+	private DedupeJpaAdapter dedupeJpaAdapter;
+	private FusionConfig fusionConfig;
 
 	 @Override
-	 public boolean isNotDuplicate(final String eventName, final Object domainEntity) {
-	   String hashKey = posterUseCase.getHashKey(eventName, domainEntity);
+	 public boolean isNotDuplicate(final String eventName, final String templateName, final Object domainEntity) {
+		 Map<String, Object> paramsMap = new HashMap<>();
+		 paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
+		 String hashKey = null;
+		 Optional<UseCaseConfig> useCase = fusionConfig.getUsecases().stream().filter(u -> u.getName().equals(eventName))
+				 .findFirst();
+
+		 if (useCase.isPresent() && useCase.get().getDedupeCheck()) {
+		 	 if(useCase.get().getHashKeyTemplate() == UseCaseConfig.HashKeyTemplate.DOMAIN_EVENT_FTL_TRANSFORMER) {
+		 	 	 hashKey = duplicateFtlTransformer.transform(eventName, paramsMap, templateName);
+			 } else if (useCase.get().getHashKeyTemplate() == UseCaseConfig.HashKeyTemplate.DOMAIN_EVENT_VELOCITY_TRANSFORMER) {
+		 	 	 hashKey = duplicateVelocityTransformer.transform(eventName, paramsMap, templateName);
+			 }
+		 }
 	   return dedupeJpaAdapter.isNotDuplicate(hashKey);
 	 }
 }

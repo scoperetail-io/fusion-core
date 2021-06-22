@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.application.port.in.command.create;
+package com.scoperetail.fusion.core.application.service.transform.impl;
 
 /*-
  * *****
@@ -26,7 +26,21 @@ package com.scoperetail.fusion.core.application.port.in.command.create;
  * =====
  */
 
-public interface PosterUseCase {
+import com.scoperetail.fusion.core.application.service.transform.AbstractTransformer;
+import com.scoperetail.fusion.core.application.service.transform.template.engine.TemplateEngine;
+import com.scoperetail.fusion.core.common.HashUtil;
 
-	void post(String event, Object domainEntity, boolean isValid) throws Exception;
+import java.util.Map;
+
+public class DuplicateTransformer extends AbstractTransformer {
+
+  public DuplicateTransformer(TemplateEngine templateEngine) {
+    super(templateEngine);
+  }
+
+  @Override
+  public String transform(final String event, final Map<String, Object> params, final String templateName) {
+    final String keyJson = templateEngine.generateTextFromTemplate(event, params, templateName);
+    return HashUtil.getHash(keyJson, HashUtil.SHA3_512);
+  }
 }
