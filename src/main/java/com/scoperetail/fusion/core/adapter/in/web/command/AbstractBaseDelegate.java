@@ -26,17 +26,16 @@ package com.scoperetail.fusion.core.adapter.in.web.command;
  * =====
  */
 
-import com.scoperetail.fusion.core.adapter.in.web.BaseDelegate;
+import com.scoperetail.fusion.core.adapter.in.web.DelegateUseCase;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 import lombok.AllArgsConstructor;
 
 @UseCase
 @AllArgsConstructor
 public abstract class AbstractBaseDelegate {
-  private static final String TEMPLATE_NAME = "hash_key";
-  private final BaseDelegate baseDelegate;
+  private final DelegateUseCase delegateUseCase;
 
-  public boolean isNotDuplicate(String eventName, Object domainEntity) {
-    return baseDelegate.isNotDuplicate(eventName, TEMPLATE_NAME, domainEntity);
+  public boolean isNotDuplicate(String eventName, Object domainEntity) throws Exception {
+    return delegateUseCase.isNotDuplicate(eventName, domainEntity);
   }
 }

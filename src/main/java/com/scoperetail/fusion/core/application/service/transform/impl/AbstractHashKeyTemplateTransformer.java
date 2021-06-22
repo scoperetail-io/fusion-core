@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.adapter.in.web;
+package com.scoperetail.fusion.core.application.service.transform.impl;
 
 /*-
  * *****
@@ -26,6 +26,21 @@ package com.scoperetail.fusion.core.adapter.in.web;
  * =====
  */
 
-public interface BaseDelegate {
-  boolean isNotDuplicate(final String eventName, final String templateName, final Object domainEntity);
+import com.scoperetail.fusion.core.application.service.transform.AbstractTransformer;
+import com.scoperetail.fusion.core.application.service.transform.template.engine.TemplateEngine;
+import com.scoperetail.fusion.core.common.HashUtil;
+
+import java.util.Map;
+
+public abstract class AbstractHashKeyTemplateTransformer extends AbstractTransformer {
+
+  public AbstractHashKeyTemplateTransformer(TemplateEngine templateEngine) {
+    super(templateEngine);
+  }
+
+  @Override
+  public String transform(final String event, final Map<String, Object> params, final String templateName) {
+    final String keyJson = templateEngine.generateTextFromTemplate(event, params, templateName);
+    return HashUtil.getHash(keyJson, HashUtil.SHA3_512);
+  }
 }

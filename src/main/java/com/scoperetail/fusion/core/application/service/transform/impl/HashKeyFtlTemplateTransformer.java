@@ -26,21 +26,12 @@ package com.scoperetail.fusion.core.application.service.transform.impl;
  * =====
  */
 
-import com.scoperetail.fusion.core.application.service.transform.AbstractTransformer;
-import com.scoperetail.fusion.core.application.service.transform.template.engine.TemplateEngine;
-import com.scoperetail.fusion.core.common.HashUtil;
+import com.scoperetail.fusion.core.application.service.transform.template.engine.FreemarkerTemplateEngine;
+import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
-public class DuplicateTransformer extends AbstractTransformer {
-
-  public DuplicateTransformer(TemplateEngine templateEngine) {
+@Component
+public class HashKeyFtlTemplateTransformer extends AbstractHashKeyTemplateTransformer {
+  public HashKeyFtlTemplateTransformer(final FreemarkerTemplateEngine templateEngine) {
     super(templateEngine);
-  }
-
-  @Override
-  public String transform(final String event, final Map<String, Object> params, final String templateName) {
-    final String keyJson = templateEngine.generateTextFromTemplate(event, params, templateName);
-    return HashUtil.getHash(keyJson, HashUtil.SHA3_512);
   }
 }

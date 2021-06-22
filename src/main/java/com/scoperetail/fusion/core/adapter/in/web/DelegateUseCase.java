@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.application.service.transform.impl;
+package com.scoperetail.fusion.core.adapter.in.web;
 
 /*-
  * *****
@@ -26,12 +26,6 @@ package com.scoperetail.fusion.core.application.service.transform.impl;
  * =====
  */
 
-import com.scoperetail.fusion.core.application.service.transform.template.engine.FreemarkerTemplateEngine;
-import org.springframework.stereotype.Component;
-
-@Component
-public class DuplicateFtlTransformer extends DuplicateTransformer {
-  public DuplicateFtlTransformer(final FreemarkerTemplateEngine templateEngine) {
-    super(templateEngine);
-  }
+public interface DelegateUseCase {
+  boolean isNotDuplicate(final String eventName, final Object domainEntity) throws Exception;
 }

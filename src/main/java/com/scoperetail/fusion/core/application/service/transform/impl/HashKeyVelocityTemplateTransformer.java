@@ -30,8 +30,8 @@ import com.scoperetail.fusion.core.application.service.transform.template.engine
 import org.springframework.stereotype.Component;
 
 @Component
-public class DuplicateVelocityTransformer extends DuplicateTransformer {
-  public DuplicateVelocityTransformer(final VelocityTemplateEngine templateEngine) {
+public class HashKeyVelocityTemplateTransformer extends AbstractHashKeyTemplateTransformer {
+  public HashKeyVelocityTemplateTransformer(final VelocityTemplateEngine templateEngine) {
     super(templateEngine);
   }
 }
