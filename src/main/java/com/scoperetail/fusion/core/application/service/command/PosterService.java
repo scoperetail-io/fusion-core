@@ -153,7 +153,7 @@ class PosterService implements PosterUseCase {
       final Transformer transformer) throws Exception {
     final Map<String, Object> paramsMap = new HashMap<>();
     paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
-    paramsMap.putAll(getCustomParams(event, adapter.getTemplateCustomizer()));
+    paramsMap.putAll(getCustomParams(event, domainEntity, adapter.getTemplateCustomizer()));
     final String requestHeader =
         transformer.transform(event, paramsMap, adapter.getRequestHeaderTemplate());
     final Map<String, String> httpHeadersMap =
@@ -166,13 +166,14 @@ class PosterService implements PosterUseCase {
     posterOutboundWebPort.post(url, adapter.getMethodType(), requestBody, httpHeadersMap);
   }
 
-  private Map<String, Object> getCustomParams(String event, String customizerClassName) {
+  private Map<String, Object> getCustomParams(final String event, final Object domainEntity,
+      final String customizerClassName) {
     Map<String, Object> params = MapUtils.EMPTY_MAP;
     try {
-      Class customizerClazz = Class.forName(customizerClassName);
-      Method method = customizerClazz.getDeclaredMethod("getParamsMap", new Class[0]);
-      params = (Map<String, Object>) method.invoke(null, new Object[0]);
-    } catch (Exception e) {
+      final Class customizerClazz = Class.forName(customizerClassName);
+      final Method method = customizerClazz.getDeclaredMethod("getParamsMap", Object.class);
+      params = (Map<String, Object>) method.invoke(null, domainEntity);
+    } catch (final Exception e) {
       log.error(
           "Skipping customization. Unable to load configured customizer for event: {} customizer: {}",
           event, customizerClassName.toString());
