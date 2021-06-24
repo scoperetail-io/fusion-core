@@ -26,12 +26,21 @@ package com.scoperetail.fusion.core.application.service.transform.impl;
  * =====
  */
 
-import com.scoperetail.fusion.core.application.service.transform.template.engine.VelocityTemplateEngine;
-import org.springframework.stereotype.Component;
+import com.scoperetail.fusion.core.application.service.transform.AbstractTransformer;
+import com.scoperetail.fusion.core.application.service.transform.template.engine.TemplateEngine;
+import com.scoperetail.fusion.core.common.HashUtil;
 
-@Component
-public class HashKeyVelocityTemplateTransformer extends AbstractHashKeyTemplateTransformer {
-  public HashKeyVelocityTemplateTransformer(final VelocityTemplateEngine templateEngine) {
+import java.util.Map;
+
+public abstract class AbstractDomainToHashKeyTemplateTransformer extends AbstractTransformer {
+
+  public AbstractDomainToHashKeyTemplateTransformer(TemplateEngine templateEngine) {
     super(templateEngine);
+  }
+
+  @Override
+  public String transform(final String event, final Map<String, Object> params, final String templateName) {
+    final String keyJson = templateEngine.generateTextFromTemplate(event, params, templateName);
+    return HashUtil.getHash(keyJson, HashUtil.SHA3_512);
   }
 }

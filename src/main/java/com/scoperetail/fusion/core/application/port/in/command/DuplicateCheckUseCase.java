@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.adapter.in.web;
+package com.scoperetail.fusion.core.application.port.in.command;
 
 /*-
  * *****
@@ -26,6 +26,6 @@ package com.scoperetail.fusion.core.adapter.in.web;
  * =====
  */
 
-public interface DelegateUseCase {
-  boolean isNotDuplicate(final String eventName, final Object domainEntity) throws Exception;
+public interface DuplicateCheckUseCase {
+  boolean isDuplicate(final String eventName, final Object domainEntity) throws Exception;
 }
