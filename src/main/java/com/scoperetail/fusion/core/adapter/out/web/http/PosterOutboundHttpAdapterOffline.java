@@ -32,15 +32,18 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 
-public interface PosterOutboundHttpAdapter {
+public interface PosterOutboundHttpAdapterOffline {
   
   @Retryable(value = {RuntimeException.class},
-      maxAttemptsExpression = "#{${fusion.retryPolicies[0].maxAttempt}}",
-      backoff = @Backoff(delayExpression = "#{${fusion.retryPolicies[0].backoffMS}}"))
-  public void post(final String url, final String methodType, final String requestBody,
-          final Map<String, String> httpHeaders) ;
-
+	  maxAttemptsExpression = "#{${fusion.retryPolicies[1].maxAttempt}}",
+	  backoff = @Backoff(delayExpression = "#{${fusion.retryPolicies[1].backoffMS}}", 
+	  multiplierExpression = "#{${fusion.retryPolicies[1].multiplierExpression}}"))
+  public void postOffline(final String url, final String methodType, final String requestBody,
+	      final Map<String, String> httpHeaders);
+  
   @Recover
   void recover(RuntimeException e, final String url, final String methodType, final String requestBody,
 	      final Map<String, String> httpHeaders);
 }
+
+
