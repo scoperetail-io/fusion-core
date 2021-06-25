@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.scoperetail.fusion</groupId>
     <artifactId>fusion-core</artifactId>
-    <version>0.8-SNAPSHOT</version>
+    <version>0.9-SNAPSHOT</version>
     <name>fusion-core</name>
     <description>Routes the messages from source to target</description>
     <url>https://github.com/scoperetail-io/${project.artifactId}</url>
@@ -27,7 +27,7 @@
         <lombok.version>1.18.12</lombok.version>
         <spotless.version>2.10.0</spotless.version>
         <fusion-shared-kernel.version>0.6</fusion-shared-kernel.version>
-        <fusion-messaging.version>0.7</fusion-messaging.version>
+        <fusion-messaging.version>0.8</fusion-messaging.version>
         <fusion-audit-persistence.version>0.8</fusion-audit-persistence.version>
         <fusion-messaging-activemq.version>0.4</fusion-messaging-activemq.version>
         <commons-time.version>0.7</commons-time.version>

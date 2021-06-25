@@ -64,7 +64,7 @@ public abstract class AbstractDomainToDomainEventJsonTransformer extends Abstrac
     return result;
   }
 
-  private final Map<String, String> getkeyMap(final String keyJson) throws IOException {
+  private Map<String, String> getkeyMap(final String keyJson) throws IOException {
     final Map<String, String> keyMap =
         JsonUtils.unmarshal(Optional.of(keyJson), Map.class.getCanonicalName());
     log.trace("Key map: {}", keyMap);
