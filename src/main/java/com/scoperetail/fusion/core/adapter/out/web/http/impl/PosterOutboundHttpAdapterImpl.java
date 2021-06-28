@@ -28,6 +28,11 @@ package com.scoperetail.fusion.core.adapter.out.web.http.impl;
  */
 
 import java.util.Map;
+import java.util.Optional;
+
+import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
+import com.scoperetail.fusion.messaging.config.FusionConfig;
+import com.scoperetail.fusion.messaging.config.RetryPolicy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -42,6 +47,14 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter {
+  private final PosterOutboundJmsPort posterOutboundJmsPort;
+  private final FusionConfig fusionConfig;
+
+  public PosterOutboundHttpAdapterImpl(PosterOutboundJmsPort posterOutboundJmsPort, FusionConfig fusionConfig) {
+    super();
+    this.posterOutboundJmsPort = posterOutboundJmsPort;
+    this.fusionConfig = fusionConfig;
+  }
 
   @Override
   public void post(final String url, final String methodType, final String requestBody,
@@ -59,8 +72,17 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
   }
 
   @Override
-  public void recover(RuntimeException exception, String message) {
-    log.error("On recover after retryPost failed. message: {}, Exception was: {} ", message,
+  public void recover(RuntimeException exception, final String url, final String methodType, final String requestBody,
+      final Map<String, String> httpHeaders) {
+    log.error("On recover after retryPost failed. message: {}, Exception was: {} ", requestBody,
         exception.getMessage());
+    final Optional<RetryPolicy> retryPolicyOpt = fusionConfig.getRetryPolicies().stream()
+        .filter(p -> p.getPolicyType().equals(RetryPolicy.PolicyType.OFFLINE)).findFirst();
+    if(retryPolicyOpt.isPresent()) {
+      RetryPolicy retryPolicy = retryPolicyOpt.get();
+      String brokerId = retryPolicy.getBrokerId();
+      String queueName = retryPolicy.getQueueName();
+      posterOutboundJmsPort.post(brokerId, queueName, requestBody);
+    }
   }
 }

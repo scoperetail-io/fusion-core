@@ -38,8 +38,9 @@ public interface PosterOutboundHttpAdapter {
       maxAttemptsExpression = "#{${fusion.retryPolicies[0].maxAttempt}}",
       backoff = @Backoff(delayExpression = "#{${fusion.retryPolicies[0].backoffMS}}"))
   public void post(final String url, final String methodType, final String requestBody,
-          final Map<String, String> httpHeaders) ;
+          final Map<String, String> httpHeaders);
 
   @Recover
-  void recover(RuntimeException e, String message);
+  void recover(RuntimeException e, final String url, final String methodType, final String requestBody,
+          final Map<String, String> httpHeaders);
 }
