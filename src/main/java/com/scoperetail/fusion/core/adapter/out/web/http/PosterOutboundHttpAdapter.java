@@ -1,4 +1,3 @@
-/* ScopeRetail (C)2021 */
 package com.scoperetail.fusion.core.adapter.out.web.http;
 
 /*-

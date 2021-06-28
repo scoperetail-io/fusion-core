@@ -1,4 +1,3 @@
-/* ScopeRetail (C)2021 */
 package com.scoperetail.fusion.core.adapter.out.web.http.impl;
 
 /*-
@@ -33,6 +32,7 @@ import java.util.Optional;
 import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
 import com.scoperetail.fusion.messaging.config.FusionConfig;
 import com.scoperetail.fusion.messaging.config.RetryPolicy;
+
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -41,7 +41,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+
 import com.scoperetail.fusion.core.adapter.out.web.http.PosterOutboundHttpAdapter;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -58,11 +60,10 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
 
   @Override
   public void post(final String url, final String methodType, final String requestBody,
-      final Map<String, String> httpHeaders) {
+          final Map<String, String> httpHeaders) {
     final HttpHeaders headers = new HttpHeaders();
     httpHeaders.entrySet().forEach(mapEntry -> headers.add(mapEntry.getKey(), mapEntry.getValue()));
     final HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
-
     HttpComponentsClientHttpRequestFactory clientHttpRequestFactory =
         new HttpComponentsClientHttpRequestFactory(HttpClientBuilder.create().build());
     final RestTemplate restTemplate = new RestTemplate(clientHttpRequestFactory);
@@ -73,12 +74,12 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
 
   @Override
   public void recover(RuntimeException exception, final String url, final String methodType, final String requestBody,
-      final Map<String, String> httpHeaders) {
+          final Map<String, String> httpHeaders) {
     log.error("On recover after retryPost failed. message: {}, Exception was: {} ", requestBody,
         exception.getMessage());
     final Optional<RetryPolicy> retryPolicyOpt = fusionConfig.getRetryPolicies().stream()
         .filter(p -> p.getPolicyType().equals(RetryPolicy.PolicyType.OFFLINE)).findFirst();
-    if(retryPolicyOpt.isPresent()) {
+    if (retryPolicyOpt.isPresent()) {
       RetryPolicy retryPolicy = retryPolicyOpt.get();
       String brokerId = retryPolicy.getBrokerId();
       String queueName = retryPolicy.getQueueName();
