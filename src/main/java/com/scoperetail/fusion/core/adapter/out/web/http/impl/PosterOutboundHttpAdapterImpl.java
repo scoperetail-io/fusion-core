@@ -60,7 +60,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
 
   @Override
   public void post(final String url, final String methodType, final String requestBody,
-          final Map<String, String> httpHeaders) {
+      final Map<String, String> httpHeaders) {
     final HttpHeaders headers = new HttpHeaders();
     httpHeaders.entrySet().forEach(mapEntry -> headers.add(mapEntry.getKey(), mapEntry.getValue()));
     final HttpEntity<String> httpEntity = new HttpEntity<>(requestBody, headers);
@@ -74,7 +74,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
 
   @Override
   public void recover(RuntimeException exception, final String url, final String methodType, final String requestBody,
-          final Map<String, String> httpHeaders) {
+      final Map<String, String> httpHeaders) {
     log.error("On recover after retryPost failed. message: {}, Exception was: {} ", requestBody,
         exception.getMessage());
     final Optional<RetryPolicy> retryPolicyOpt = fusionConfig.getRetryPolicies().stream()
