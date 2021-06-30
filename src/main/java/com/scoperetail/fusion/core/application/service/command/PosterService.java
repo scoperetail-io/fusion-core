@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections.MapUtils;
 import com.scoperetail.fusion.core.application.port.in.command.create.PosterUseCase;
 import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
+import com.scoperetail.fusion.core.application.port.out.mail.PosterOutboundMailPort;
 import com.scoperetail.fusion.core.application.port.out.web.PosterOutboundWebPort;
 import com.scoperetail.fusion.core.application.service.transform.Transformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToDomainEventJsonFtlTransformer;
@@ -51,6 +52,7 @@ import com.scoperetail.fusion.messaging.config.Adapter.TransformationType;
 import com.scoperetail.fusion.messaging.config.Adapter.TransportType;
 import com.scoperetail.fusion.messaging.config.Config;
 import com.scoperetail.fusion.messaging.config.FusionConfig;
+import com.scoperetail.fusion.messaging.config.MailHost;
 import com.scoperetail.fusion.messaging.config.UseCaseConfig;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 import lombok.AllArgsConstructor;
@@ -76,6 +78,8 @@ class PosterService implements PosterUseCase {
   private final DomainToStringTransformer domainToStringTransformer;
 
   private final FusionConfig fusionConfig;
+
+  private final PosterOutboundMailPort posterOutboundMailPort;
 
   @Override
   public void post(final String event, final Object domainEntity, final boolean isValid)
@@ -110,6 +114,9 @@ class PosterService implements PosterUseCase {
             case REST:
               notifyRest(event, domainEntity, adapter, transformer);
               break;
+			case MAIL:
+				notifyMail(event, domainEntity, adapter, transformer);
+				break;              
             default:
               log.error("Invalid adapter transport type: {} for adapter: {}", trasnportType,
                   adapter);
@@ -180,4 +187,23 @@ class PosterService implements PosterUseCase {
     }
     return params;
   }
+  
+	private void notifyMail(final String event, final Object domainEntity, final Adapter adapter,
+			final Transformer transformer) throws Exception {
+		final Optional<MailHost> optionalMailHost = fusionConfig.getMailHosts().stream()
+				.filter(host -> host.getHostId().equals(adapter.getHostId())).findFirst();
+		if (optionalMailHost.isPresent()) {
+			final Map<String, Object> paramsMap = new HashMap<>();
+			paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
+			String from = transformer.transform(event, paramsMap, adapter.getFromTemplate());
+			String to = transformer.transform(event, paramsMap, adapter.getToTemplate());
+			String cc = transformer.transform(event, paramsMap, adapter.getCcTemplate());
+			String bcc = transformer.transform(event, paramsMap, adapter.getBccTemplate());
+			String replyTo = transformer.transform(event, paramsMap, adapter.getReplyToTemplate());
+			String subject = transformer.transform(event, paramsMap, adapter.getSubjectTemplate());
+			String text = transformer.transform(event, paramsMap, adapter.getTextTemplate());
+			String sentDate = transformer.transform(event, paramsMap, adapter.getSentDateTemplate());
+			posterOutboundMailPort.post(optionalMailHost.get(), from, to, cc, bcc, replyTo, subject, text, sentDate);
+		}
+	}
 }
