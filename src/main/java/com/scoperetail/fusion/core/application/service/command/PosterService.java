@@ -198,7 +198,7 @@ class PosterService implements PosterUseCase {
       log.error(
           "Skipping customization. Unable to load configured customizer for event: {} customizer: {}",
           event,
-          customizerClassName.toString());
+          customizerClassName);
     }
     return params;
   }
