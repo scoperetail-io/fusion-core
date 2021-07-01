@@ -67,7 +67,8 @@ class PosterService implements PosterUseCase {
 
   private final PosterOutboundWebPort posterOutboundWebPort;
 
-  private final DomainToDomainEventJsonVelocityTransformer domainToDomainEventJsonVelocityTransformer;
+  private final DomainToDomainEventJsonVelocityTransformer
+      domainToDomainEventJsonVelocityTransformer;
 
   private final DomainToDomainEventJsonFtlTransformer domainToDomainEventJsonFtlTransformer;
 
@@ -89,8 +90,8 @@ class PosterService implements PosterUseCase {
 
   private void handleEvent(final String event, final Object domainEntity, final boolean isValid)
       throws Exception {
-    final Optional<UseCaseConfig> optUseCase = fusionConfig.getUsecases().stream()
-        .filter(u -> u.getName().equals(event)).findFirst();
+    final Optional<UseCaseConfig> optUseCase =
+        fusionConfig.getUsecases().stream().filter(u -> u.getName().equals(event)).findFirst();
     if (optUseCase.isPresent()) {
       final UseCaseConfig useCase = optUseCase.get();
       final String activeConfig = useCase.getActiveConfig();
@@ -99,10 +100,15 @@ class PosterService implements PosterUseCase {
       if (optConfig.isPresent()) {
         final Config config = optConfig.get();
         final UsecaseResult usecaseResult = isValid ? SUCCESS : FAILURE;
-        final List<Adapter> adapters = config.getAdapters().stream()
-            .filter(c -> c.getAdapterType().equals(Adapter.AdapterType.OUTBOUND)
-                && c.getUsecaseResult().equals(usecaseResult))
-            .collect(Collectors.toList());
+        final List<Adapter> adapters =
+            config
+                .getAdapters()
+                .stream()
+                .filter(
+                    c ->
+                        c.getAdapterType().equals(Adapter.AdapterType.OUTBOUND)
+                            && c.getUsecaseResult().equals(usecaseResult))
+                .collect(Collectors.toList());
         for (final Adapter adapter : adapters) {
           log.trace("Notifying outbound adapter: {}", adapter);
           final Transformer transformer = getTransformer(adapter.getTransformationType());
@@ -114,12 +120,12 @@ class PosterService implements PosterUseCase {
             case REST:
               notifyRest(event, domainEntity, adapter, transformer);
               break;
-			case MAIL:
-				notifyMail(event, domainEntity, adapter, transformer);
-				break;              
+            case MAIL:
+              notifyMail(event, domainEntity, adapter, transformer);
+              break;
             default:
-              log.error("Invalid adapter transport type: {} for adapter: {}", trasnportType,
-                  adapter);
+              log.error(
+                  "Invalid adapter transport type: {} for adapter: {}", trasnportType, adapter);
           }
         }
       }
@@ -148,16 +154,24 @@ class PosterService implements PosterUseCase {
     return transformer;
   }
 
-  private void notifyJms(final String event, final Object domainEntity, final Adapter adapter,
-      final Transformer transformer) throws Exception {
-    Map<String, Object> paramsMap = new HashMap<>();
+  private void notifyJms(
+      final String event,
+      final Object domainEntity,
+      final Adapter adapter,
+      final Transformer transformer)
+      throws Exception {
+    final Map<String, Object> paramsMap = new HashMap<>();
     paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
     final String payload = transformer.transform(event, paramsMap, adapter.getTemplate());
     posterOutboundJmsPort.post(adapter.getBrokerId(), adapter.getQueueName(), payload);
   }
 
-  private void notifyRest(final String event, final Object domainEntity, final Adapter adapter,
-      final Transformer transformer) throws Exception {
+  private void notifyRest(
+      final String event,
+      final Object domainEntity,
+      final Adapter adapter,
+      final Transformer transformer)
+      throws Exception {
     final Map<String, Object> paramsMap = new HashMap<>();
     paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
     paramsMap.putAll(getCustomParams(event, domainEntity, adapter.getTemplateCustomizer()));
@@ -173,8 +187,8 @@ class PosterService implements PosterUseCase {
     posterOutboundWebPort.post(url, adapter.getMethodType(), requestBody, httpHeadersMap);
   }
 
-  private Map<String, Object> getCustomParams(final String event, final Object domainEntity,
-      final String customizerClassName) {
+  private Map<String, Object> getCustomParams(
+      final String event, final Object domainEntity, final String customizerClassName) {
     Map<String, Object> params = MapUtils.EMPTY_MAP;
     try {
       final Class customizerClazz = Class.forName(customizerClassName);
@@ -183,27 +197,37 @@ class PosterService implements PosterUseCase {
     } catch (final Exception e) {
       log.error(
           "Skipping customization. Unable to load configured customizer for event: {} customizer: {}",
-          event, customizerClassName.toString());
+          event,
+          customizerClassName.toString());
     }
     return params;
   }
-  
-	private void notifyMail(final String event, final Object domainEntity, final Adapter adapter,
-			final Transformer transformer) throws Exception {
-		final Optional<MailHost> optionalMailHost = fusionConfig.getMailHosts().stream()
-				.filter(host -> host.getHostId().equals(adapter.getHostId())).findFirst();
-		if (optionalMailHost.isPresent()) {
-			final Map<String, Object> paramsMap = new HashMap<>();
-			paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
-			String from = transformer.transform(event, paramsMap, adapter.getFromTemplate());
-			String to = transformer.transform(event, paramsMap, adapter.getToTemplate());
-			String cc = transformer.transform(event, paramsMap, adapter.getCcTemplate());
-			String bcc = transformer.transform(event, paramsMap, adapter.getBccTemplate());
-			String replyTo = transformer.transform(event, paramsMap, adapter.getReplyToTemplate());
-			String subject = transformer.transform(event, paramsMap, adapter.getSubjectTemplate());
-			String text = transformer.transform(event, paramsMap, adapter.getTextTemplate());
-			String sentDate = transformer.transform(event, paramsMap, adapter.getSentDateTemplate());
-			posterOutboundMailPort.post(optionalMailHost.get(), from, to, cc, bcc, replyTo, subject, text, sentDate);
-		}
-	}
+
+  private void notifyMail(
+      final String event,
+      final Object domainEntity,
+      final Adapter adapter,
+      final Transformer transformer)
+      throws Exception {
+    final Optional<MailHost> optionalMailHost =
+        fusionConfig
+            .getMailHosts()
+            .stream()
+            .filter(host -> host.getHostId().equals(adapter.getHostId()))
+            .findFirst();
+    if (optionalMailHost.isPresent()) {
+      final Map<String, Object> paramsMap = new HashMap<>();
+      paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
+      final String from = transformer.transform(event, paramsMap, adapter.getFromTemplate());
+      final String to = transformer.transform(event, paramsMap, adapter.getToTemplate());
+      final String cc = transformer.transform(event, paramsMap, adapter.getCcTemplate());
+      final String bcc = transformer.transform(event, paramsMap, adapter.getBccTemplate());
+      final String replyTo = transformer.transform(event, paramsMap, adapter.getReplyToTemplate());
+      final String subject = transformer.transform(event, paramsMap, adapter.getSubjectTemplate());
+      final String text = transformer.transform(event, paramsMap, adapter.getTextTemplate());
+
+      posterOutboundMailPort.post(
+          optionalMailHost.get(), from, to, cc, bcc, replyTo, subject, text);
+    }
+  }
 }

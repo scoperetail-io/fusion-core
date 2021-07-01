@@ -30,6 +30,13 @@ import com.scoperetail.fusion.messaging.config.MailHost;
 
 public interface PosterOutboundMailPort {
 
-	void post(MailHost mailHost, String from, String to, String cc, String bcc, String replyTo, String subject, String text,
-			String sentDate);
+  void post(
+      MailHost mailHost,
+      String from,
+      String to,
+      String cc,
+      String bcc,
+      String replyTo,
+      String subject,
+      String text);
 }

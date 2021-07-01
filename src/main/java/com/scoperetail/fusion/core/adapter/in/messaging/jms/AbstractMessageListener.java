@@ -54,11 +54,16 @@ public abstract class AbstractMessageListener implements MessageListener<String>
   private final String messageIdentifier;
 
   protected enum MessageType {
-    XML, JSON
+    XML,
+    JSON
   }
 
-  protected AbstractMessageListener(final String broker, final String queue,
-      final MessageType messageType, final Schema schema, final String messageIdentifier,
+  protected AbstractMessageListener(
+      final String broker,
+      final String queue,
+      final MessageType messageType,
+      final Schema schema,
+      final String messageIdentifier,
       final MessageRouterReceiver messageRouterReceiver) {
     this.messageType = messageType;
     this.schema = schema;
@@ -131,7 +136,7 @@ public abstract class AbstractMessageListener implements MessageListener<String>
   }
 
   private boolean isValidJsonMessageIdentifier(final String message) {
-    boolean canHandle = true;
+    boolean canHandle = false;
     if (StringUtils.isNotBlank(messageIdentifier)) {
       try {
         final Event event = unmarshal(message);
@@ -139,12 +144,14 @@ public abstract class AbstractMessageListener implements MessageListener<String>
       } catch (final Exception e) {
         log.error("Invalid JSON message: {} exception: {}", message, e);
       }
+    } else {
+      canHandle = true;
     }
     return canHandle;
   }
 
   private Event unmarshal(final Object message) throws IOException {
-    return JsonUtils.unmarshal(Optional.ofNullable(message.toString()),
-        Event.class.getCanonicalName());
+    return JsonUtils.unmarshal(
+        Optional.ofNullable(message.toString()), Event.class.getCanonicalName());
   }
 }

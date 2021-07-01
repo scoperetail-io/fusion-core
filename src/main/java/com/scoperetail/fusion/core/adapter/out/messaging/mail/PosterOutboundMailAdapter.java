@@ -26,54 +26,44 @@ package com.scoperetail.fusion.core.adapter.out.messaging.mail;
  * =====
  */
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.util.Date;
 import java.util.Properties;
-import org.springframework.mail.SimpleMailMessage;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import com.scoperetail.fusion.core.application.port.out.mail.PosterOutboundMailPort;
 import com.scoperetail.fusion.messaging.config.MailHost;
 import com.scoperetail.fusion.messaging.config.Smtp;
 import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @MessagingAdapter
 @AllArgsConstructor
+@Slf4j
 public class PosterOutboundMailAdapter implements PosterOutboundMailPort {
 
-
   @Override
-  public void post(final MailHost mailHost, final String from, final String to, final String cc,
-      final String bcc, final String replyTo, final String subject, final String text,
-      final String sentDate) {
+  public void post(
+      final MailHost mailHost,
+      final String from,
+      final String to,
+      final String cc,
+      final String bcc,
+      final String replyTo,
+      final String subject,
+      final String text) {
     final JavaMailSender mailSender = getJavaMailSender(mailHost);
-    final SimpleMailMessage simpleMailMessage =
-        getSimpleMessage(from, to, cc, bcc, replyTo, subject, text, sentDate);
-    mailSender.send(simpleMailMessage);
-  }
-
-  private SimpleMailMessage getSimpleMessage(final String from, final String to, final String cc,
-      final String bcc, final String replyTo, final String subject, final String text,
-      final String sendDate) {
-    final SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
-    simpleMailMessage.setFrom(from);
-    simpleMailMessage.setTo(to);
-    simpleMailMessage.setCc(cc);
-    simpleMailMessage.setBcc(bcc);
-    simpleMailMessage.setReplyTo(replyTo);
-    simpleMailMessage.setSubject(subject);
-    simpleMailMessage.setText(text);
-    Date sDate;
     try {
-      sDate = new SimpleDateFormat("dd/MM/yyyy").parse(sendDate);
-    } catch (final ParseException e) {
-      sDate = Date.from(Instant.now());
+      final MimeMessage mimeMessage = mailSender.createMimeMessage();
+      createMimeMessage(from, to, cc, bcc, replyTo, subject, text, mimeMessage);
+      mailSender.send(mimeMessage);
+    } catch (final MessagingException e) {
+      log.error("Message occured while sending mail: {}", e);
     }
-    simpleMailMessage.setSentDate(sDate);
-    return simpleMailMessage;
   }
 
   private JavaMailSender getJavaMailSender(final MailHost mailHost) {
@@ -92,5 +82,29 @@ public class PosterOutboundMailAdapter implements PosterOutboundMailPort {
     props.put("mail.debug", mailHost.isDebugEnabled());
 
     return mailSender;
+  }
+
+  private void createMimeMessage(
+      final String from,
+      final String to,
+      final String cc,
+      final String bcc,
+      final String replyTo,
+      final String subject,
+      final String text,
+      final MimeMessage mimeMessage)
+      throws MessagingException {
+    final MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+    helper.setFrom(from);
+    helper.setTo(to);
+    helper.setCc(cc);
+    helper.setBcc(bcc);
+    helper.setReplyTo(replyTo);
+    helper.setSubject(subject);
+    final MimeBodyPart textPart = new MimeBodyPart();
+    textPart.setContent(text, "text/html");
+
+    final Multipart mp = helper.getMimeMultipart();
+    mp.addBodyPart(textPart);
   }
 }
