@@ -1,6 +1,4 @@
-package com.scoperetail.fusion.core.adapter.out.web.http;
-
-import java.io.IOException;
+package com.scoperetail.fusion.core.common;
 
 /*-
  * *****
@@ -29,19 +27,19 @@ import java.io.IOException;
  */
 
 import java.util.Map;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
 
-public interface PosterOutboundHttpAdapter {
-  
-  @Retryable(value = {RuntimeException.class},
-      maxAttemptsExpression = "#{${fusion.retryPolicies[0].maxAttempt}}",
-      backoff = @Backoff(delayExpression = "#{${fusion.retryPolicies[0].backoffMS}}"))
-  public void post(final String url, final String methodType, final String requestBody,
-          final Map<String, String> httpHeaders);
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-  @Recover
-  void recover(RuntimeException e, final String url, final String methodType, final String requestBody,
-          final Map<String, String> httpHeaders) throws IOException;
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class RetryLog {
+	private String url;
+	private String methodType;
+	private String requestBody;
+	private Map<String, String> httpHeaders;
 }

@@ -1,5 +1,7 @@
 package com.scoperetail.fusion.core.adapter.out.web.http.impl;
 
+import java.io.IOException;
+
 /*-
  * *****
  * fusion-core
@@ -30,6 +32,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
+import com.scoperetail.fusion.core.common.JsonUtils;
+import com.scoperetail.fusion.core.common.RetryLog;
 import com.scoperetail.fusion.messaging.config.FusionConfig;
 import com.scoperetail.fusion.messaging.config.RetryPolicy;
 
@@ -74,7 +78,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
 
   @Override
   public void recover(RuntimeException exception, final String url, final String methodType, final String requestBody,
-      final Map<String, String> httpHeaders) {
+      final Map<String, String> httpHeaders) throws IOException {
     log.error("On recover after retryPost failed. message: {}, Exception was: {} ", requestBody,
         exception.getMessage());
     final Optional<RetryPolicy> retryPolicyOpt = fusionConfig.getRetryPolicies().stream()
@@ -83,7 +87,10 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
       RetryPolicy retryPolicy = retryPolicyOpt.get();
       String brokerId = retryPolicy.getBrokerId();
       String queueName = retryPolicy.getQueueName();
-      posterOutboundJmsPort.post(brokerId, queueName, requestBody);
+      
+      RetryLog retryLog = RetryLog.builder().url(url).methodType(methodType).requestBody(requestBody).httpHeaders(httpHeaders).build();
+      
+      posterOutboundJmsPort.post(brokerId, queueName, JsonUtils.marshal(Optional.ofNullable(retryLog)));
     }
   }
 }
