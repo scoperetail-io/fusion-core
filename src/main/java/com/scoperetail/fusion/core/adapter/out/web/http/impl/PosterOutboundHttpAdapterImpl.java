@@ -36,9 +36,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import com.scoperetail.fusion.core.adapter.out.web.http.PosterOutboundHttpAdapter;
-import com.scoperetail.fusion.core.common.GenericRestResponseErrorHandler;
 import com.scoperetail.fusion.core.common.LoggingInterceptor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,7 +56,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
     HttpComponentsClientHttpRequestFactory clientHttpRequestFactory =
         new HttpComponentsClientHttpRequestFactory(HttpClientBuilder.create().build());
     final RestTemplate restTemplate = new RestTemplate(clientHttpRequestFactory);
-    restTemplate.setErrorHandler(new GenericRestResponseErrorHandler());
+    restTemplate.setErrorHandler(new DefaultResponseErrorHandler());
     restTemplate.setInterceptors(Collections.singletonList(new LoggingInterceptor()));
     final ResponseEntity<String> exchange =
         restTemplate.exchange(url, HttpMethod.valueOf(methodType), httpEntity, String.class);
