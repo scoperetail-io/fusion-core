@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.application.service.transform.impl;
+package com.scoperetail.fusion.core.application.port.in.command;
 
 /*-
  * *****
@@ -26,13 +26,6 @@ package com.scoperetail.fusion.core.application.service.transform.impl;
  * =====
  */
 
-import org.springframework.stereotype.Component;
-import com.scoperetail.fusion.core.application.service.transform.AbstractTransformer;
-import com.scoperetail.fusion.core.application.service.transform.template.engine.VelocityTemplateEngine;
-
-@Component
-public class DomainToVelocityTemplateTransformer extends AbstractTransformer {
-  public DomainToVelocityTemplateTransformer(final VelocityTemplateEngine templateEngine) {
-    super(templateEngine);
-  }
+public interface DuplicateCheckUseCase {
+  boolean isDuplicate(final String eventName, final Object domainEntity) throws Exception;
 }

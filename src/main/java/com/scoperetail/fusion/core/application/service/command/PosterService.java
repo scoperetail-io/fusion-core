@@ -1,4 +1,3 @@
-/* ScopeRetail (C)2021 */
 package com.scoperetail.fusion.core.application.service.command;
 
 /*-
@@ -7,17 +6,23 @@ package com.scoperetail.fusion.core.application.service.command;
  * -----
  * Copyright (C) 2018 - 2021 Scope Retail Systems Inc.
  * -----
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  * =====
  */
 
@@ -148,7 +153,7 @@ class PosterService implements PosterUseCase {
       final Transformer transformer) throws Exception {
     final Map<String, Object> paramsMap = new HashMap<>();
     paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
-    paramsMap.putAll(getCustomParams(event, adapter.getTemplateCustomizer()));
+    paramsMap.putAll(getCustomParams(event, domainEntity, adapter.getTemplateCustomizer()));
     final String requestHeader =
         transformer.transform(event, paramsMap, adapter.getRequestHeaderTemplate());
     final Map<String, String> httpHeadersMap =
@@ -161,13 +166,14 @@ class PosterService implements PosterUseCase {
     posterOutboundWebPort.post(url, adapter.getMethodType(), requestBody, httpHeadersMap);
   }
 
-  private Map<String, Object> getCustomParams(String event, String customizerClassName) {
+  private Map<String, Object> getCustomParams(final String event, final Object domainEntity,
+      final String customizerClassName) {
     Map<String, Object> params = MapUtils.EMPTY_MAP;
     try {
-      Class customizerClazz = Class.forName(customizerClassName);
-      Method method = customizerClazz.getDeclaredMethod("getParamsMap", new Class[0]);
-      params = (Map<String, Object>) method.invoke(null, new Object[0]);
-    } catch (Exception e) {
+      final Class customizerClazz = Class.forName(customizerClassName);
+      final Method method = customizerClazz.getDeclaredMethod("getParamsMap", Object.class);
+      params = (Map<String, Object>) method.invoke(null, domainEntity);
+    } catch (final Exception e) {
       log.error(
           "Skipping customization. Unable to load configured customizer for event: {} customizer: {}",
           event, customizerClassName.toString());

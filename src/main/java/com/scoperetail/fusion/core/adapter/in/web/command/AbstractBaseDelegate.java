@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.adapter.out.messaging.jms;
+package com.scoperetail.fusion.core.adapter.in.web.command;
 
 /*-
  * *****
@@ -26,22 +26,41 @@ package com.scoperetail.fusion.core.adapter.out.messaging.jms;
  * =====
  */
 
-import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
-import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterSender;
-import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import org.springframework.http.HttpStatus;
+import com.scoperetail.fusion.core.application.port.in.command.DuplicateCheckUseCase;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@MessagingAdapter
 @AllArgsConstructor
 @Slf4j
-public class PosterOutboundJMSAdapter implements PosterOutboundJmsPort {
+public abstract class AbstractBaseDelegate {
+  private final DuplicateCheckUseCase duplicateCheckUseCase;
 
-  private MessageRouterSender messageSender;
-
-  @Override
-  public void post(final String brokerId, final String queueName, final String payload) {
-    messageSender.send(brokerId, queueName, payload);
-    log.trace("Sent Message to Broker Id:{}  Queue: {} Message: {}", brokerId, queueName, payload);
+  protected HttpStatus doEvent(final String event, final Object domainEntity) {
+    HttpStatus result = CONFLICT;
+    try {
+      if (!duplicateCheckUseCase.isDuplicate(event, domainEntity)) {
+        result = doProcess(event, domainEntity);
+      }
+    } catch (final Exception e) {
+      log.error("Error in dedupe service: ", e);
+    }
+    return result;
   }
+
+  private HttpStatus doProcess(final String event, final Object domainEntity) {
+    HttpStatus result;
+    try {
+      result = processEvent(domainEntity);
+    } catch (final Exception e) {
+      result = INTERNAL_SERVER_ERROR;
+      log.error("Exception occurred during processing event {} exception is: {}", event, e);
+    }
+    return result;
+  }
+
+  protected abstract HttpStatus processEvent(Object domainEntity) throws Exception;
+
 }

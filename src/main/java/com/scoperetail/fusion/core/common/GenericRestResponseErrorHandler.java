@@ -1,15 +1,5 @@
 package com.scoperetail.fusion.core.common;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Scanner;
-
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.web.client.ResponseErrorHandler;
-
 /*-
  * *****
  * fusion-core
@@ -30,6 +20,15 @@ import org.springframework.web.client.ResponseErrorHandler;
  * =====
  */
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Scanner;
+
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.web.client.ResponseErrorHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.webjars.NotFoundException;
 
@@ -46,8 +45,7 @@ public class GenericRestResponseErrorHandler implements ResponseErrorHandler {
 	public void handleError(ClientHttpResponse clientHttpResponse) throws IOException {
 		String responseAsString = toString(clientHttpResponse.getBody());
 		log.error("ResponseBody: {}", responseAsString);
-
-		throw new CustomException(responseAsString);
+		throw new IOException(responseAsString);
 	}
 
 	@Override
@@ -62,20 +60,12 @@ public class GenericRestResponseErrorHandler implements ResponseErrorHandler {
 			throw new NotFoundException(responseAsString);
 		} else {
 			log.error("Generic Error. URL: {}, HttpMethod: {}, ResponseBody: {}", url, method, responseAsString);
-			throw new CustomException(responseAsString);
+			throw new IOException(responseAsString);
 		}
 	}
 
 	String toString(InputStream inputStream) {
 		Scanner s = new Scanner(inputStream).useDelimiter("\\A");
 		return s.hasNext() ? s.next() : "";
-	}
-
-	static class CustomException extends IOException {
-		private static final long serialVersionUID = 1L;
-
-		public CustomException(String message) {
-			super(message);
-		}
 	}
 }

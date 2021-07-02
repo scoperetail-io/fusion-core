@@ -26,13 +26,12 @@ package com.scoperetail.fusion.core.application.service.transform.impl;
  * =====
  */
 
-import org.springframework.stereotype.Component;
-import com.scoperetail.fusion.core.application.service.transform.AbstractTransformer;
 import com.scoperetail.fusion.core.application.service.transform.template.engine.VelocityTemplateEngine;
+import org.springframework.stereotype.Component;
 
 @Component
-public class DomainToVelocityTemplateTransformer extends AbstractTransformer {
-  public DomainToVelocityTemplateTransformer(final VelocityTemplateEngine templateEngine) {
+public class DomainToHashKeyVelocityTemplateTransformer extends AbstractDomainToHashKeyTemplateTransformer {
+  public DomainToHashKeyVelocityTemplateTransformer(final VelocityTemplateEngine templateEngine) {
     super(templateEngine);
   }
 }
