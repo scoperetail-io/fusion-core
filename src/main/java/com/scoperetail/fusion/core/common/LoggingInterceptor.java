@@ -48,10 +48,6 @@ public class LoggingInterceptor implements ClientHttpRequestInterceptor {
 		logRequest(request, body);
 		ClientHttpResponse response = execution.execute(request, body);
 		logResponse(response);
-
-		//Add optional additional headers
-		response.getHeaders().add("headerName", "VALUE");
-
 		return response;
 	}
 
