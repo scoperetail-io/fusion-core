@@ -27,6 +27,7 @@ package com.scoperetail.fusion.core.adapter.out.web.http.impl;
  * =====
  */
 
+import java.util.Collections;
 import java.util.Map;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.HttpEntity;
@@ -35,8 +36,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import com.scoperetail.fusion.core.adapter.out.web.http.PosterOutboundHttpAdapter;
+import com.scoperetail.fusion.core.common.LoggingInterceptor;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -53,6 +56,8 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
     HttpComponentsClientHttpRequestFactory clientHttpRequestFactory =
         new HttpComponentsClientHttpRequestFactory(HttpClientBuilder.create().build());
     final RestTemplate restTemplate = new RestTemplate(clientHttpRequestFactory);
+    restTemplate.setErrorHandler(new DefaultResponseErrorHandler());
+    restTemplate.setInterceptors(Collections.singletonList(new LoggingInterceptor()));
     final ResponseEntity<String> exchange =
         restTemplate.exchange(url, HttpMethod.valueOf(methodType), httpEntity, String.class);
     log.trace("REST request sent to URL: {} and Response received is: {}", url, exchange);
