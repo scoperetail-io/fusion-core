@@ -1,8 +1,8 @@
-package com.scoperetail.fusion.core.adapter.out.persistence.jpa;
+package com.scoperetail.fusion.core.adapter.out.persistence.jpa.entity;
 
 /*-
  * *****
- * fusion-core
+ * fusion-audit-persistence
  * -----
  * Copyright (C) 2018 - 2021 Scope Retail Systems Inc.
  * -----
@@ -26,18 +26,26 @@ package com.scoperetail.fusion.core.adapter.out.persistence.jpa;
  * =====
  */
 
-import com.scoperetail.fusion.core.adapter.out.persistence.jpa.repository.DedupeKeyRepository;
-import com.scoperetail.fusion.core.application.port.out.persistence.DedupeOutboundPort;
-import com.scoperetail.fusion.shared.kernel.common.annotation.PersistenceAdapter;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
-@PersistenceAdapter
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import java.time.LocalDateTime;
+
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
-public class DedupeJpaAdapter implements DedupeOutboundPort {
-  private DedupeKeyRepository dedupeKeyRepository;
+@Getter
+@Setter
+@Entity
+@Table(name = "dedupe_key")
+public class DedupeKeyEntity {
+  @Id
+  @Column(name = "log_key", nullable = false)
+  private String logKey;
 
-  @Override
-  public Boolean isNotDuplicate(String logKey) {
-    return dedupeKeyRepository.insertIfNotExist(logKey) > 0;
-  }
+  @Column(name = "create_ts")
+  private LocalDateTime createTs;
 }

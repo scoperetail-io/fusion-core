@@ -1,8 +1,8 @@
-package com.scoperetail.fusion.core.adapter.out.persistence.jpa;
+package com.scoperetail.fusion.core.adapter.out.persistence.jpa.repository;
 
 /*-
  * *****
- * fusion-core
+ * fusion-audit-persistence
  * -----
  * Copyright (C) 2018 - 2021 Scope Retail Systems Inc.
  * -----
@@ -26,18 +26,30 @@ package com.scoperetail.fusion.core.adapter.out.persistence.jpa;
  * =====
  */
 
-import com.scoperetail.fusion.core.adapter.out.persistence.jpa.repository.DedupeKeyRepository;
-import com.scoperetail.fusion.core.application.port.out.persistence.DedupeOutboundPort;
-import com.scoperetail.fusion.shared.kernel.common.annotation.PersistenceAdapter;
-import lombok.AllArgsConstructor;
+import com.scoperetail.fusion.core.adapter.out.persistence.jpa.entity.DedupeKeyEntity;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-@PersistenceAdapter
-@AllArgsConstructor
-public class DedupeJpaAdapter implements DedupeOutboundPort {
-  private DedupeKeyRepository dedupeKeyRepository;
+import javax.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.util.List;
 
-  @Override
-  public Boolean isNotDuplicate(String logKey) {
-    return dedupeKeyRepository.insertIfNotExist(logKey) > 0;
-  }
+@Repository
+public interface DedupeKeyRepository extends JpaRepository<DedupeKeyEntity, String> {
+  @Transactional
+  @Modifying
+  @Query(name = "dedupeKey.jpa.insert", nativeQuery = true)
+  Integer insertIfNotExist(@Param("logKey") String logKey);
+
+  @Query(name = "dedupe.keys.to.erase")
+  List<String> findDedupeKeysToErase(@Param("pivoteDate") LocalDateTime pivoteDate, Pageable pageable);
+
+  @Query(name = "delete.dedupe.key")
+  @Modifying
+  @Transactional
+  Integer deleteDedupeKey(@Param("logKeyList") List<String> logKeyList);
 }
