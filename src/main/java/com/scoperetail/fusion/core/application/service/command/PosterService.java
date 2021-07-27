@@ -12,10 +12,10 @@ package com.scoperetail.fusion.core.application.service.command;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,15 +28,22 @@ package com.scoperetail.fusion.core.application.service.command;
 
 import static com.scoperetail.fusion.messaging.application.port.in.UsecaseResult.FAILURE;
 import static com.scoperetail.fusion.messaging.application.port.in.UsecaseResult.SUCCESS;
+import static java.io.File.separator;
+
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import org.apache.commons.collections.MapUtils;
+
 import com.scoperetail.fusion.core.application.port.in.command.create.PosterUseCase;
 import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
+import com.scoperetail.fusion.core.application.port.out.mail.MailDetailsDto;
 import com.scoperetail.fusion.core.application.port.out.mail.PosterOutboundMailPort;
 import com.scoperetail.fusion.core.application.port.out.web.PosterOutboundWebPort;
 import com.scoperetail.fusion.core.application.service.transform.Transformer;
@@ -55,6 +62,7 @@ import com.scoperetail.fusion.messaging.config.FusionConfig;
 import com.scoperetail.fusion.messaging.config.MailHost;
 import com.scoperetail.fusion.messaging.config.UseCaseConfig;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,6 +70,8 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 @Slf4j
 class PosterService implements PosterUseCase {
+
+  private static final String DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH = "default";
 
   private final PosterOutboundJmsPort posterOutboundJmsPort;
 
@@ -218,16 +228,86 @@ class PosterService implements PosterUseCase {
     if (optionalMailHost.isPresent()) {
       final Map<String, Object> paramsMap = new HashMap<>();
       paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
-      final String from = transformer.transform(event, paramsMap, adapter.getFromTemplate());
-      final String to = transformer.transform(event, paramsMap, adapter.getToTemplate());
-      final String cc = transformer.transform(event, paramsMap, adapter.getCcTemplate());
-      final String bcc = transformer.transform(event, paramsMap, adapter.getBccTemplate());
-      final String replyTo = transformer.transform(event, paramsMap, adapter.getReplyToTemplate());
-      final String subject = transformer.transform(event, paramsMap, adapter.getSubjectTemplate());
-      final String text = transformer.transform(event, paramsMap, adapter.getTextTemplate());
 
-      posterOutboundMailPort.post(
-          optionalMailHost.get(), from, to, cc, bcc, replyTo, subject, text);
+      final String from =
+          transformer.transform(
+              event,
+              paramsMap,
+              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getFromTemplate());
+      final String to =
+          transformer.transform(
+              event,
+              paramsMap,
+              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getToTemplate());
+      final String cc =
+          transformer.transform(
+              event,
+              paramsMap,
+              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getCcTemplate());
+      final String bcc =
+          transformer.transform(
+              event,
+              paramsMap,
+              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getBccTemplate());
+      final String replyTo =
+          transformer.transform(
+              event,
+              paramsMap,
+              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getReplyToTemplate());
+
+      final String emailTemplateLookupPath = getEmailTemplateLookupPath(domainEntity);
+      String subject = null;
+      String body = null;
+      try {
+        subject =
+            transformer.transform(
+                event,
+                paramsMap,
+                emailTemplateLookupPath + separator + adapter.getSubjectTemplate());
+      } catch (final Exception e) {
+        subject =
+            transformer.transform(
+                event,
+                paramsMap,
+                DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getSubjectTemplate());
+      }
+      try {
+        body =
+            transformer.transform(
+                event, paramsMap, emailTemplateLookupPath + separator + adapter.getTextTemplate());
+      } catch (final Exception e) {
+        body =
+            transformer.transform(
+                event,
+                paramsMap,
+                DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getTextTemplate());
+      }
+      final MailDetailsDto mailDetailsDto =
+          MailDetailsDto.builder()
+              .mailHost(optionalMailHost.get())
+              .from(from)
+              .to(to)
+              .cc(cc)
+              .bcc(bcc)
+              .replyTo(replyTo)
+              .subject(subject)
+              .body(body)
+              .build();
+      posterOutboundMailPort.post(mailDetailsDto);
     }
+  }
+
+  private String getEmailTemplateLookupPath(final Object domainEntity)
+      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    String result = DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH;
+    final Class<? extends Object> clazz = domainEntity.getClass();
+    final Method method = clazz.getDeclaredMethod("getLookupPath", new Class[0]);
+    if (Objects.nonNull(method) && method.getReturnType().equals(String.class)) {
+      final Object object = method.invoke(domainEntity, new Object[0]);
+      if (object instanceof String) {
+        result = (String) object;
+      }
+    }
+    return result;
   }
 }

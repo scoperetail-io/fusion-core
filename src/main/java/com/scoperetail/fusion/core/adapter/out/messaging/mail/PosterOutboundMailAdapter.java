@@ -12,10 +12,10 @@ package com.scoperetail.fusion.core.adapter.out.messaging.mail;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,17 +27,22 @@ package com.scoperetail.fusion.core.adapter.out.messaging.mail;
  */
 
 import java.util.Properties;
+
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
+
+import com.scoperetail.fusion.core.application.port.out.mail.MailDetailsDto;
 import com.scoperetail.fusion.core.application.port.out.mail.PosterOutboundMailPort;
 import com.scoperetail.fusion.messaging.config.MailHost;
 import com.scoperetail.fusion.messaging.config.Smtp;
 import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,19 +52,19 @@ import lombok.extern.slf4j.Slf4j;
 public class PosterOutboundMailAdapter implements PosterOutboundMailPort {
 
   @Override
-  public void post(
-      final MailHost mailHost,
-      final String from,
-      final String to,
-      final String cc,
-      final String bcc,
-      final String replyTo,
-      final String subject,
-      final String text) {
-    final JavaMailSender mailSender = getJavaMailSender(mailHost);
+  public void post(final MailDetailsDto mailDetailsDto) {
+    final JavaMailSender mailSender = getJavaMailSender(mailDetailsDto.getMailHost());
     try {
       final MimeMessage mimeMessage = mailSender.createMimeMessage();
-      createMimeMessage(from, to, cc, bcc, replyTo, subject, text, mimeMessage);
+      createMimeMessage(
+          mailDetailsDto.getFrom(),
+          mailDetailsDto.getTo(),
+          mailDetailsDto.getCc(),
+          mailDetailsDto.getBcc(),
+          mailDetailsDto.getReplyTo(),
+          mailDetailsDto.getSubject(),
+          mailDetailsDto.getBody(),
+          mimeMessage);
       mailSender.send(mimeMessage);
     } catch (final MessagingException e) {
       log.error("Message occured while sending mail: {}", e);
@@ -97,8 +102,8 @@ public class PosterOutboundMailAdapter implements PosterOutboundMailPort {
     final MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
     helper.setFrom(from);
     helper.setTo(to);
-    helper.setCc(cc);
-    helper.setBcc(bcc);
+    //    helper.setCc(cc);
+    //    helper.setBcc(bcc);
     helper.setReplyTo(replyTo);
     helper.setSubject(subject);
     final MimeBodyPart textPart = new MimeBodyPart();

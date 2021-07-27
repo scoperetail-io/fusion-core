@@ -26,7 +26,22 @@ package com.scoperetail.fusion.core.application.port.out.mail;
  * =====
  */
 
-public interface PosterOutboundMailPort {
+import com.scoperetail.fusion.messaging.config.MailHost;
 
-  void post(MailDetailsDto mailDetailsDto);
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+
+@Builder
+@Getter
+@Setter
+public class MailDetailsDto {
+  private MailHost mailHost;
+  private String from;
+  private String to;
+  private String cc;
+  private String bcc;
+  private String replyTo;
+  private String subject;
+  private String body;
 }
