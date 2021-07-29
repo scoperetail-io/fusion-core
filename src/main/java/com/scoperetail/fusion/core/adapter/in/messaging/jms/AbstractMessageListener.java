@@ -12,10 +12,10 @@ package com.scoperetail.fusion.core.adapter.in.messaging.jms;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,21 +29,26 @@ package com.scoperetail.fusion.core.adapter.in.messaging.jms;
 import static com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult.FAILURE;
 import static com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult.SUCCESS;
 import static java.util.Optional.ofNullable;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.validation.Schema;
+
 import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
+
 import com.scoperetail.fusion.core.common.Event;
 import com.scoperetail.fusion.core.common.JaxbUtil;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.MessageListener;
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult;
 import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterReceiver;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -128,6 +133,7 @@ public abstract class AbstractMessageListener implements MessageListener<String>
       final InputStream is = new ByteArrayInputStream(message.getBytes());
       final Document document = documentBuilder.parse(is);
       final String rootElement = document.getDocumentElement().getNodeName();
+      // contains instaed of equals
       canHandle = messageIdentifier.equals(rootElement);
     } catch (final Exception e) {
       log.error("Invalid XMl message: {} exception: {}", message, e);
