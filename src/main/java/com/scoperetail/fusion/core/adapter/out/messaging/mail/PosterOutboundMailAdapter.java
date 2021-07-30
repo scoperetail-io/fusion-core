@@ -59,6 +59,8 @@ public class PosterOutboundMailAdapter implements PosterOutboundMailPort {
       createMimeMessage(
           mailDetailsDto.getFrom(),
           mailDetailsDto.getTo(),
+          mailDetailsDto.getCc(),
+          mailDetailsDto.getBcc(),
           mailDetailsDto.getReplyTo(),
           mailDetailsDto.getSubject(),
           mailDetailsDto.getBody(),
@@ -90,6 +92,8 @@ public class PosterOutboundMailAdapter implements PosterOutboundMailPort {
   private void createMimeMessage(
       final String from,
       final String to,
+      final String cc,
+      final String bcc,
       final String replyTo,
       final String subject,
       final String text,
@@ -98,6 +102,8 @@ public class PosterOutboundMailAdapter implements PosterOutboundMailPort {
     final MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
     helper.setFrom(from);
     helper.setTo(to);
+    helper.setBcc(bcc);
+    helper.setCc(cc);
     helper.setReplyTo(replyTo);
     helper.setSubject(subject);
     final MimeBodyPart textPart = new MimeBodyPart();

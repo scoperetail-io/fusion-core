@@ -39,6 +39,8 @@ public class MailDetailsDto {
   private MailHost mailHost;
   private String from;
   private String to;
+  private String cc;
+  private String bcc;
   private String replyTo;
   private String subject;
   private String body;

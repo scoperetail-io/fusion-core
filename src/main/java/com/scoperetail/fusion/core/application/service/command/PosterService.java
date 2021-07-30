@@ -44,6 +44,7 @@ import org.apache.commons.collections.MapUtils;
 
 import com.scoperetail.fusion.core.application.port.in.command.create.PosterUseCase;
 import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
+import com.scoperetail.fusion.core.application.port.out.mail.MailDetailsDto;
 import com.scoperetail.fusion.core.application.port.out.mail.PosterOutboundMailPort;
 import com.scoperetail.fusion.core.application.port.out.web.PosterOutboundWebPort;
 import com.scoperetail.fusion.core.application.service.transform.Transformer;
@@ -230,76 +231,50 @@ class PosterService implements PosterUseCase {
       paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
 
       final String templateDirBasePath = transformer.getTemplateDirBasePath(event);
-      //      final String emailTemplateLookupPath =
-      //          getEmailTemplateLookupPath(
-      //              domainEntity,
-      //              templateDirBasePath,
-      //              templateName,
-      //              transformer.getTemplateFileExtension());
-      //      final String from =
-      //          transformer.transform(
-      //              event,
-      //              paramsMap,
-      //              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getFromTemplate());
-      //      final String to =
-      //          transformer.transform(
-      //              event,
-      //              paramsMap,
-      //              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getToTemplate());
-      //      final String cc =
-      //          transformer.transform(
-      //              event,
-      //              paramsMap,
-      //              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getCcTemplate());
-      //      final String bcc =
-      //          transformer.transform(
-      //              event,
-      //              paramsMap,
-      //              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getBccTemplate());
-      //      final String replyTo =
-      //          transformer.transform(
-      //              event,
-      //              paramsMap,
-      //              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getReplyToTemplate());
-      //
-      //      String subject = null;
-      //      String body = null;
-      //      try {
-      //        subject =
-      //            transformer.transform(
-      //                event,
-      //                paramsMap,
-      //                emailTemplateLookupPath + separator + adapter.getSubjectTemplate());
-      //      } catch (final Exception e) {
-      //        subject =
-      //            transformer.transform(
-      //                event,
-      //                paramsMap,
-      //                DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getSubjectTemplate());
-      //      }
-      //      try {
-      //        body =
-      //            transformer.transform(
-      //                event, paramsMap, emailTemplateLookupPath + separator + adapter.getTextTemplate());
-      //      } catch (final Exception e) {
-      //        body =
-      //            transformer.transform(
-      //                event,
-      //                paramsMap,
-      //                DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getTextTemplate());
-      //      }
-      //      final MailDetailsDto mailDetailsDto =
-      //          MailDetailsDto.builder()
-      //              .mailHost(optionalMailHost.get())
-      //              .from(from)
-      //              .to(to)
-      //              //              .cc(cc)
-      //              //              .bcc(bcc)
-      //              .replyTo(replyTo)
-      //              .subject(subject)
-      //              .body(body)
-      //              .build();
-      //      posterOutboundMailPort.post(mailDetailsDto);
+
+      final String emailTemplateLookupPath =
+          getEmailTemplateLookupPath(
+              domainEntity,
+              templateDirBasePath,
+              adapter.getFromTemplate(),
+              transformer.getTemplateFileExtension());
+
+      final String from =
+          transformer.transform(
+              event,
+              paramsMap,
+              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getFromTemplate());
+
+      final String to =
+          transformer.transform(
+              event,
+              paramsMap,
+              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getToTemplate());
+
+      final String replyTo =
+          transformer.transform(
+              event,
+              paramsMap,
+              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getReplyToTemplate());
+
+      final String subject =
+          transformer.transform(
+              event, paramsMap, emailTemplateLookupPath + separator + adapter.getSubjectTemplate());
+
+      final String body =
+          transformer.transform(
+              event, paramsMap, emailTemplateLookupPath + separator + adapter.getTextTemplate());
+
+      final MailDetailsDto mailDetailsDto =
+          MailDetailsDto.builder()
+              .mailHost(optionalMailHost.get())
+              .from(from)
+              .to(to)
+              .replyTo(replyTo)
+              .subject(subject)
+              .body(body)
+              .build();
+      posterOutboundMailPort.post(mailDetailsDto);
     }
   }
 
