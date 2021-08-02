@@ -130,11 +130,11 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
             .build();
 
     final String payload = JsonUtils.marshal(Optional.ofNullable(httpRequest));
-    messageSender.send(adapter.getBoBrokerId(), adapter.getBoQuename(), payload);
+    messageSender.send(adapter.getBoBrokerId(), adapter.getBoQueueName(), payload);
     log.trace(
         "Sent Message to Broker Id:{}  Queue: {} Message: {}",
         adapter.getBoBrokerId(),
-        adapter.getBoQuename(),
+        adapter.getBoQueueName(),
         payload);
   }
 }
