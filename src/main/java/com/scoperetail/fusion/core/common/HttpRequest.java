@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.adapter.out.web.http;
+package com.scoperetail.fusion.core.common;
 
 /*-
  * *****
@@ -27,12 +27,19 @@ package com.scoperetail.fusion.core.adapter.out.web.http;
  */
 
 import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import org.springframework.http.ResponseEntity;
-
-public interface PosterOutboundHttpOfflineAdapter {
-
-	public ResponseEntity<String> post(final String url, final String methodType, final String requestBody,
-			final Map<String, String> httpHeaders);
-
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class HttpRequest {
+  private String url;
+  private Map<String, String> queryParams;
+  private String methodType;
+  private Map<String, String> httpHeaders;
+  private String requestBody;
 }
