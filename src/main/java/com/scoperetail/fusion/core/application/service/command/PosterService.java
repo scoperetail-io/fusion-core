@@ -44,6 +44,7 @@ import org.apache.commons.collections.MapUtils;
 
 import com.scoperetail.fusion.core.application.port.in.command.create.PosterUseCase;
 import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
+import com.scoperetail.fusion.core.application.port.out.kafka.PosterOutboundKafkaPort;
 import com.scoperetail.fusion.core.application.port.out.mail.MailDetailsDto;
 import com.scoperetail.fusion.core.application.port.out.mail.PosterOutboundMailPort;
 import com.scoperetail.fusion.core.application.port.out.web.PosterOutboundWebPort;
@@ -75,6 +76,7 @@ class PosterService implements PosterUseCase {
   private static final String DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH = "default";
 
   private final PosterOutboundJmsPort posterOutboundJmsPort;
+  private final PosterOutboundKafkaPort posterOutboundKafkaPort;
 
   private final PosterOutboundWebPort posterOutboundWebPort;
 
@@ -133,6 +135,9 @@ class PosterService implements PosterUseCase {
               break;
             case MAIL:
               notifyMail(event, domainEntity, adapter, transformer);
+              break;
+            case KAFKA:
+              notifyKafka(event, domainEntity, adapter, transformer);
               break;
             default:
               log.error(
@@ -305,5 +310,18 @@ class PosterService implements PosterUseCase {
     final boolean exists = file.exists();
 
     return result;
+  }
+
+  private void notifyKafka(
+      final String event,
+      final Object domainEntity,
+      final Adapter adapter,
+      final Transformer transformer)
+      throws Exception {
+
+    final Map<String, Object> paramsMap = new HashMap<>();
+    paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
+    final String payload = transformer.transform(event, paramsMap, adapter.getTemplate());
+    posterOutboundKafkaPort.post(adapter.getBrokerId(), adapter.getTopicName(), payload);
   }
 }

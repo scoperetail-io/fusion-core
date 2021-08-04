@@ -59,6 +59,11 @@
 		</dependency>
 		<dependency>
 			<groupId>com.scoperetail.fusion</groupId>
+			<artifactId>fusion-messaging-kafka</artifactId>
+			<version>0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.scoperetail.fusion</groupId>
 			<artifactId>fusion-audit-persistence</artifactId>
 			<version>${fusion-audit-persistence.version}</version>
 		</dependency>

@@ -146,7 +146,7 @@ public abstract class AbstractMessageListener implements MessageListener<String>
     if (StringUtils.isNotBlank(messageIdentifier)) {
       try {
         final Event event = unmarshal(message);
-        canHandle = messageIdentifier.equals(event.getEventMeta().getEventName());
+        canHandle = messageIdentifier.equals(event.getEventName());
       } catch (final Exception e) {
         log.error("Invalid JSON message: {} exception: {}", message, e);
       }
