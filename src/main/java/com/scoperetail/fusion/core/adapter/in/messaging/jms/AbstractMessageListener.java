@@ -31,6 +31,8 @@ import static com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResu
 import static java.util.Optional.ofNullable;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Optional;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.validation.Schema;
@@ -39,6 +41,9 @@ import com.scoperetail.fusion.core.common.JaxbUtil;
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.MessageListener;
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult;
 import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterReceiver;
+import com.scoperetail.fusion.messaging.config.Adapter;
+import com.scoperetail.fusion.messaging.config.Adapter.MessageType;
+import com.scoperetail.fusion.messaging.config.FusionConfig;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -46,24 +51,21 @@ public abstract class AbstractMessageListener implements MessageListener<String>
 
   private final MessageType messageType;
   private final Schema schema;
-  private final String messageIdentifier;
-
-  protected enum MessageType {
-    XML,
-    JSON
-  }
+  private final List<String> messageIdentifiers;
 
   protected AbstractMessageListener(
-      final String broker,
-      final String queue,
-      final MessageType messageType,
+      final String usecase,
       final Schema schema,
-      final String messageIdentifier,
-      final MessageRouterReceiver messageRouterReceiver) {
-    this.messageType = messageType;
+      final MessageRouterReceiver messageRouterReceiver,
+      final FusionConfig fusionConfig) {
+    final Optional<Adapter> optAdapter = fusionConfig.getInboundAdapter(usecase);
+    final Adapter adapter =
+        optAdapter.orElseThrow(
+            () -> new RuntimeException("Inbound adapter not found for usecase:" + usecase));
+    this.messageType = adapter.getMessageType();
+    this.messageIdentifiers = adapter.getMessageIdentifiers();
     this.schema = schema;
-    this.messageIdentifier = messageIdentifier;
-    messageRouterReceiver.registerListener(broker, queue, this);
+    messageRouterReceiver.registerListener(adapter.getBrokerId(), adapter.getQueueName(), this);
   }
 
   @Override
@@ -125,7 +127,7 @@ public abstract class AbstractMessageListener implements MessageListener<String>
       final InputStream is = new ByteArrayInputStream(message.getBytes());
       final Document document = documentBuilder.parse(is);
       final String rootElement = document.getDocumentElement().getNodeName();
-      canHandle = messageIdentifier.equals(rootElement);
+      canHandle = messageIdentifiers.contains(rootElement);
     } catch (final Exception e) {
       log.error("Invalid XML message: {} exception: {}", message, e);
     }
