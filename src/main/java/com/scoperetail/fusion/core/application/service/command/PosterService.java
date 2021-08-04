@@ -51,7 +51,6 @@ import com.scoperetail.fusion.messaging.config.Adapter.TransformationType;
 import com.scoperetail.fusion.messaging.config.Adapter.TransportType;
 import com.scoperetail.fusion.messaging.config.Config;
 import com.scoperetail.fusion.messaging.config.FusionConfig;
-import com.scoperetail.fusion.messaging.config.UseCaseConfig;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,43 +85,37 @@ class PosterService implements PosterUseCase {
 
   private void handleEvent(final String event, final Object domainEntity, final boolean isValid)
       throws Exception {
-    final Optional<UseCaseConfig> optUseCase =
-        fusionConfig.getUsecases().stream().filter(u -> u.getName().equals(event)).findFirst();
-    if (optUseCase.isPresent()) {
-      final UseCaseConfig useCase = optUseCase.get();
-      final String activeConfig = useCase.getActiveConfig();
-      final Optional<Config> optConfig =
-          useCase.getConfigs().stream().filter(c -> activeConfig.equals(c.getName())).findFirst();
-      if (optConfig.isPresent()) {
-        final Config config = optConfig.get();
-        final UsecaseResult usecaseResult = isValid ? SUCCESS : FAILURE;
-        final List<Adapter> adapters =
-            config
-                .getAdapters()
-                .stream()
-                .filter(
-                    c ->
-                        c.getAdapterType().equals(Adapter.AdapterType.OUTBOUND)
-                            && c.getUsecaseResult().equals(usecaseResult))
-                .collect(Collectors.toList());
-        for (final Adapter adapter : adapters) {
-          log.trace("Notifying outbound adapter: {}", adapter);
-          final Transformer transformer = getTransformer(adapter.getTransformationType());
-          final TransportType trasnportType = adapter.getTrasnportType();
-          switch (trasnportType) {
-            case JMS:
-              notifyJms(event, domainEntity, adapter, transformer);
-              break;
-            case REST:
-              notifyRest(event, domainEntity, adapter, transformer);
-              break;
-            default:
-              log.error(
-                  "Invalid adapter transport type: {} for adapter: {}", trasnportType, adapter);
-          }
+    final Optional<Config> optActiveConfig = fusionConfig.getActiveConfig(event);
+    if (optActiveConfig.isPresent()) {
+      final UsecaseResult usecaseResult = isValid ? SUCCESS : FAILURE;
+      final List<Adapter> adapters = getAdapters(usecaseResult, optActiveConfig.get());
+      for (final Adapter adapter : adapters) {
+        log.trace("Notifying outbound adapter: {}", adapter);
+        final Transformer transformer = getTransformer(adapter.getTransformationType());
+        final TransportType trasnportType = adapter.getTrasnportType();
+        switch (trasnportType) {
+          case JMS:
+            notifyJms(event, domainEntity, adapter, transformer);
+            break;
+          case REST:
+            notifyRest(event, domainEntity, adapter, transformer);
+            break;
+          default:
+            log.error("Invalid adapter transport type: {} for adapter: {}", trasnportType, adapter);
         }
       }
     }
+  }
+
+  private List<Adapter> getAdapters(final UsecaseResult usecaseResult, final Config config) {
+    return config
+        .getAdapters()
+        .stream()
+        .filter(
+            c ->
+                c.getAdapterType().equals(Adapter.AdapterType.OUTBOUND)
+                    && c.getUsecaseResult().equals(usecaseResult))
+        .collect(Collectors.toList());
   }
 
   private Transformer getTransformer(final TransformationType transformationType) {

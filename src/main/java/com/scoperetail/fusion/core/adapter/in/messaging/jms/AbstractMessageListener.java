@@ -47,8 +47,6 @@ public abstract class AbstractMessageListener implements MessageListener<String>
   private final MessageType messageType;
   private final Schema schema;
   private final String messageIdentifier;
-  private final String broker;
-  private final String queue;
 
   protected enum MessageType {
     XML,
@@ -65,8 +63,6 @@ public abstract class AbstractMessageListener implements MessageListener<String>
     this.messageType = messageType;
     this.schema = schema;
     this.messageIdentifier = messageIdentifier;
-    this.broker = broker;
-    this.queue = queue;
     messageRouterReceiver.registerListener(broker, queue, this);
   }
 
