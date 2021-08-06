@@ -28,13 +28,9 @@ package com.scoperetail.fusion.core;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.retry.annotation.EnableRetry;
-
-import com.scoperetail.messaging.kafka.config.KafkaConfig;
 
 @Configuration
 @EnableRetry
-@ComponentScan({"com.scoperetail.fusion", "com.scoperetail.messaging.kafka"})
-@Import({KafkaConfig.class})
+@ComponentScan({"com.scoperetail.fusion"})
 public class FusionCoreConfig {}
