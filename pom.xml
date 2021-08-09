@@ -31,6 +31,7 @@
 		<fusion-shared-kernel.version>0.6</fusion-shared-kernel.version>
 		<fusion-messaging.version>0.11</fusion-messaging.version>
 		<fusion-messaging-activemq.version>0.4</fusion-messaging-activemq.version>
+		<fusion-messaging-kafka.version>0.1</fusion-messaging-kafka.version>
 		<commons-time.version>0.7</commons-time.version>
 		<spring-retry.version>1.3.1</spring-retry.version>
 		<sonar.exclusions>
@@ -59,7 +60,7 @@
 		<dependency>
 			<groupId>com.scoperetail.fusion</groupId>
 			<artifactId>fusion-messaging-kafka</artifactId>
-			<version>0.1-SNAPSHOT</version>
+			<version>${fusion-messaging-kafka.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
