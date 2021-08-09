@@ -1,4 +1,10 @@
-package com.scoperetail.fusion.core.application.service.transform;
+package com.scoperetail.fusion.core.adapter.out.messaging.kafka;
+
+import org.springframework.lang.Nullable;
+
+import com.scoperetail.fusion.core.application.port.out.kafka.PosterOutboundKafkaPort;
+import com.scoperetail.fusion.messaging.kafka.adapter.out.KafkaMessageSender;
+import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
 
 /*-
  * *****
@@ -26,31 +32,23 @@ package com.scoperetail.fusion.core.application.service.transform;
  * =====
  */
 
-import java.util.Map;
-
-import com.scoperetail.fusion.core.application.service.transform.template.engine.TemplateEngine;
-
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@MessagingAdapter
 @AllArgsConstructor
-public abstract class AbstractTransformer implements Transformer {
+@Slf4j
+public class PosterOutboundKafkaAdapter implements PosterOutboundKafkaPort {
 
-  protected TemplateEngine templateEngine;
-
-  @Override
-  public String transform(
-      final String event, final Map<String, Object> params, final String template)
-      throws Exception {
-    return templateEngine.generateTextFromTemplate(event, params, template);
-  }
+  @Nullable private KafkaMessageSender kafkaMessageSender;
 
   @Override
-  public String getTemplateDirBasePath(final String event) {
-    return templateEngine.getTemplateDirBasePath(event);
-  }
-
-  @Override
-  public String getTemplateFileExtension() {
-    return templateEngine.getTemplateFileExtension();
+  public void post(final String brokerId, final String topicName, final String payload) {
+    kafkaMessageSender.send(brokerId, topicName, payload);
+    log.trace(
+        "Sent Message to kafka BrokerId:{}  topicName: {} Message: {}",
+        brokerId,
+        topicName,
+        payload);
   }
 }
