@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>com.scoperetail.fusion</groupId>
 	<artifactId>fusion-core</artifactId>
-	<version>0.9-SNAPSHOT</version>
+	<version>0.13-SNAPSHOT</version>
 	<name>fusion-core</name>
 	<description>Routes the messages from source to target</description>
 	<url>https://github.com/scoperetail-io/${project.artifactId}</url>
@@ -29,8 +29,7 @@
 		<lombok.version>1.18.12</lombok.version>
 		<spotless.version>2.10.0</spotless.version>
 		<fusion-shared-kernel.version>0.6</fusion-shared-kernel.version>
-		<fusion-messaging.version>0.9-SNAPSHOT</fusion-messaging.version>
-		<fusion-audit-persistence.version>0.8</fusion-audit-persistence.version>
+		<fusion-messaging.version>0.11-SNAPSHOT</fusion-messaging.version>
 		<fusion-messaging-activemq.version>0.4</fusion-messaging-activemq.version>
 		<commons-time.version>0.7</commons-time.version>
 		<spring-retry.version>1.3.1</spring-retry.version>
@@ -63,9 +62,9 @@
 			<version>0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>com.scoperetail.fusion</groupId>
-			<artifactId>fusion-audit-persistence</artifactId>
-			<version>${fusion-audit-persistence.version}</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+			<version>${spring.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.scoperetail</groupId>
@@ -97,11 +96,6 @@
 					<artifactId>spring-boot-starter-logging</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-mail</artifactId>
-			<version>${spring.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -179,6 +173,16 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
 			<version>${httpclient.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<version>2.4.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mariadb.jdbc</groupId>
+			<artifactId>mariadb-java-client</artifactId>
+			<version>2.7.2</version>
 		</dependency>
 	</dependencies>
 </project>

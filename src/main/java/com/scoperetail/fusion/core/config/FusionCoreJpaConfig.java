@@ -1,10 +1,4 @@
-package com.scoperetail.fusion.core.adapter.out.messaging.kafka;
-
-import org.springframework.lang.Nullable;
-
-import com.scoperetail.fusion.core.application.port.out.kafka.PosterOutboundKafkaPort;
-import com.scoperetail.fusion.messaging.kafka.adapter.out.KafkaMessageSender;
-import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
+package com.scoperetail.fusion.core.config;
 
 /*-
  * *****
@@ -18,10 +12,10 @@ import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -32,23 +26,12 @@ import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
  * =====
  */
 
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@MessagingAdapter
-@AllArgsConstructor
-@Slf4j
-public class PosterOutboundKafkaAdapter implements PosterOutboundKafkaPort {
-
-  @Nullable private KafkaMessageSender kafkaMessageSender;
-
-  @Override
-  public void post(final String brokerId, final String topicName, final String payload) {
-    kafkaMessageSender.send(brokerId, topicName, payload);
-    log.trace(
-        "Sent Message to kafka BrokerId:{}  topicName: {} Message: {}",
-        brokerId,
-        topicName,
-        payload);
-  }
+@Configuration
+@EnableJpaRepositories(basePackages = "com.scoperetail.fusion.core.adapter.out.persistence.jpa.repository")
+@EntityScan(basePackages = "com.scoperetail.fusion.core.adapter.out.persistence.jpa.entity")
+public class FusionCoreJpaConfig {
 }

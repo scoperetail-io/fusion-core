@@ -1,14 +1,8 @@
-package com.scoperetail.fusion.core.adapter.out.messaging.kafka;
-
-import org.springframework.lang.Nullable;
-
-import com.scoperetail.fusion.core.application.port.out.kafka.PosterOutboundKafkaPort;
-import com.scoperetail.fusion.messaging.kafka.adapter.out.KafkaMessageSender;
-import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
+package com.scoperetail.fusion.core.adapter.out.persistence.jpa.repository;
 
 /*-
  * *****
- * fusion-core
+ * fusion-audit-persistence
  * -----
  * Copyright (C) 2018 - 2021 Scope Retail Systems Inc.
  * -----
@@ -18,10 +12,10 @@ import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -32,23 +26,30 @@ import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
  * =====
  */
 
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.scoperetail.fusion.core.adapter.out.persistence.jpa.entity.DedupeKeyEntity;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-@MessagingAdapter
-@AllArgsConstructor
-@Slf4j
-public class PosterOutboundKafkaAdapter implements PosterOutboundKafkaPort {
+import javax.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.util.List;
 
-  @Nullable private KafkaMessageSender kafkaMessageSender;
+@Repository
+public interface DedupeKeyRepository extends JpaRepository<DedupeKeyEntity, String> {
+  @Transactional
+  @Modifying
+  @Query(name = "dedupeKey.jpa.insert", nativeQuery = true)
+  Integer insertIfNotExist(@Param("logKey") String logKey);
 
-  @Override
-  public void post(final String brokerId, final String topicName, final String payload) {
-    kafkaMessageSender.send(brokerId, topicName, payload);
-    log.trace(
-        "Sent Message to kafka BrokerId:{}  topicName: {} Message: {}",
-        brokerId,
-        topicName,
-        payload);
-  }
+  @Query(name = "dedupe.keys.to.erase")
+  List<String> findDedupeKeysToErase(@Param("pivoteDate") LocalDateTime pivoteDate, Pageable pageable);
+
+  @Query(name = "delete.dedupe.key")
+  @Modifying
+  @Transactional
+  Integer deleteDedupeKey(@Param("logKeyList") List<String> logKeyList);
 }

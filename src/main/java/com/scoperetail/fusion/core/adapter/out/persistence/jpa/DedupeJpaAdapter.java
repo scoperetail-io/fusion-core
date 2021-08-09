@@ -26,7 +26,7 @@ package com.scoperetail.fusion.core.adapter.out.persistence.jpa;
  * =====
  */
 
-import com.scoperetail.fusion.audit.persistence.repository.DedupeKeyRepository;
+import com.scoperetail.fusion.core.adapter.out.persistence.jpa.repository.DedupeKeyRepository;
 import com.scoperetail.fusion.core.application.port.out.persistence.DedupeOutboundPort;
 import com.scoperetail.fusion.shared.kernel.common.annotation.PersistenceAdapter;
 import lombok.AllArgsConstructor;

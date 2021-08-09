@@ -236,39 +236,54 @@ class PosterService implements PosterUseCase {
       paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
 
       final String templateDirBasePath = transformer.getTemplateDirBasePath(event);
-
-      final String emailTemplateLookupPath =
-          getEmailTemplateLookupPath(
-              domainEntity,
-              templateDirBasePath,
-              adapter.getFromTemplate(),
-              transformer.getTemplateFileExtension());
-
+      final String templateFileExtension = transformer.getTemplateFileExtension();
+      final String lookupPath = getLookupPath(domainEntity);
       final String from =
           transformer.transform(
               event,
               paramsMap,
-              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getFromTemplate());
+              getEmailTemplateLookupPath(
+                  templateDirBasePath,
+                  lookupPath,
+                  adapter.getFromTemplate(),
+                  templateFileExtension));
 
       final String to =
           transformer.transform(
               event,
               paramsMap,
-              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getToTemplate());
+              getEmailTemplateLookupPath(
+                  templateDirBasePath, lookupPath, adapter.getToTemplate(), templateFileExtension));
 
       final String replyTo =
           transformer.transform(
               event,
               paramsMap,
-              DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + adapter.getReplyToTemplate());
+              getEmailTemplateLookupPath(
+                  templateDirBasePath,
+                  lookupPath,
+                  adapter.getReplyToTemplate(),
+                  templateFileExtension));
 
       final String subject =
           transformer.transform(
-              event, paramsMap, emailTemplateLookupPath + separator + adapter.getSubjectTemplate());
+              event,
+              paramsMap,
+              getEmailTemplateLookupPath(
+                  templateDirBasePath,
+                  lookupPath,
+                  adapter.getSubjectTemplate(),
+                  templateFileExtension));
 
       final String body =
           transformer.transform(
-              event, paramsMap, emailTemplateLookupPath + separator + adapter.getTextTemplate());
+              event,
+              paramsMap,
+              getEmailTemplateLookupPath(
+                  templateDirBasePath,
+                  lookupPath,
+                  adapter.getTextTemplate(),
+                  templateFileExtension));
 
       final MailDetailsDto mailDetailsDto =
           MailDetailsDto.builder()
@@ -284,13 +299,25 @@ class PosterService implements PosterUseCase {
   }
 
   private String getEmailTemplateLookupPath(
-      final Object domainEntity,
       final String templateDirBasePath,
+      final String lookupPath,
       final String templateName,
-      final String templateFileExtension)
+      final String templateFileExtension) {
+    String targetLookupPath = DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + templateName;
+
+    if (Objects.nonNull(lookupPath)) {
+      final boolean exists =
+          isLookupPathExists(templateDirBasePath, lookupPath, templateName, templateFileExtension);
+      if (exists) {
+        targetLookupPath = lookupPath + separator + templateName;
+      }
+    }
+    return targetLookupPath;
+  }
+
+  private String getLookupPath(final Object domainEntity)
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-    final String defaultLookupPath = "default";
-    String result = defaultLookupPath;
+    String result = null;
     final Class<? extends Object> clazz = domainEntity.getClass();
     final Method method = clazz.getDeclaredMethod("getLookupPath", new Class[0]);
     if (Objects.nonNull(method) && method.getReturnType().equals(String.class)) {
@@ -299,17 +326,22 @@ class PosterService implements PosterUseCase {
         result = (String) object;
       }
     }
-    final File file =
-        new File(
+    return result;
+  }
+
+  private boolean isLookupPathExists(
+      final String templateDirBasePath,
+      final String lookupPath,
+      final String templateName,
+      final String templateFileExtension) {
+    return new File(
             templateDirBasePath
                 + separator
-                + result
+                + lookupPath
                 + separator
                 + templateName
-                + templateFileExtension);
-    final boolean exists = file.exists();
-
-    return result;
+                + templateFileExtension)
+        .exists();
   }
 
   private void notifyKafka(

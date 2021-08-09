@@ -1,5 +1,7 @@
 package com.scoperetail.fusion.core.adapter.out.messaging.mail;
 
+import java.util.Objects;
+
 /*-
  * *****
  * fusion-core
@@ -102,8 +104,13 @@ public class PosterOutboundMailAdapter implements PosterOutboundMailPort {
     final MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
     helper.setFrom(from);
     helper.setTo(to);
-    helper.setBcc(bcc);
-    helper.setCc(cc);
+    if (Objects.nonNull(bcc)) {
+      helper.setBcc(bcc);
+    }
+    if (Objects.nonNull(cc)) {
+      helper.setCc(cc);
+    }
+
     helper.setReplyTo(replyTo);
     helper.setSubject(subject);
     final MimeBodyPart textPart = new MimeBodyPart();
