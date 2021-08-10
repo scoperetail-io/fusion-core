@@ -1,8 +1,8 @@
-package com.scoperetail.fusion.core.application.service.transform;
+package com.scoperetail.fusion.core.adapter.out.persistence.jpa.repository;
 
 /*-
  * *****
- * fusion-core
+ * fusion-audit-persistence
  * -----
  * Copyright (C) 2018 - 2021 Scope Retail Systems Inc.
  * -----
@@ -12,10 +12,10 @@ package com.scoperetail.fusion.core.application.service.transform;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,31 +26,30 @@ package com.scoperetail.fusion.core.application.service.transform;
  * =====
  */
 
-import java.util.Map;
+import com.scoperetail.fusion.core.adapter.out.persistence.jpa.entity.DedupeKeyEntity;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-import com.scoperetail.fusion.core.application.service.transform.template.engine.TemplateEngine;
+import javax.transaction.Transactional;
+import java.time.LocalDateTime;
+import java.util.List;
 
-import lombok.AllArgsConstructor;
+@Repository
+public interface DedupeKeyRepository extends JpaRepository<DedupeKeyEntity, String> {
+  @Transactional
+  @Modifying
+  @Query(name = "dedupeKey.jpa.insert", nativeQuery = true)
+  Integer insertIfNotExist(@Param("logKey") String logKey);
 
-@AllArgsConstructor
-public abstract class AbstractTransformer implements Transformer {
+  @Query(name = "dedupe.keys.to.erase")
+  List<String> findDedupeKeysToErase(@Param("pivoteDate") LocalDateTime pivoteDate, Pageable pageable);
 
-  protected TemplateEngine templateEngine;
-
-  @Override
-  public String transform(
-      final String event, final Map<String, Object> params, final String template)
-      throws Exception {
-    return templateEngine.generateTextFromTemplate(event, params, template);
-  }
-
-  @Override
-  public String getTemplateDirBasePath(final String event) {
-    return templateEngine.getTemplateDirBasePath(event);
-  }
-
-  @Override
-  public String getTemplateFileExtension() {
-    return templateEngine.getTemplateFileExtension();
-  }
+  @Query(name = "delete.dedupe.key")
+  @Modifying
+  @Transactional
+  Integer deleteDedupeKey(@Param("logKeyList") List<String> logKeyList);
 }

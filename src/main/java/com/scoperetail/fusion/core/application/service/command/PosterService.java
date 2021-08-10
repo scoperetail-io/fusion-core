@@ -28,15 +28,22 @@ package com.scoperetail.fusion.core.application.service.command;
 
 import static com.scoperetail.fusion.messaging.application.port.in.UsecaseResult.FAILURE;
 import static com.scoperetail.fusion.messaging.application.port.in.UsecaseResult.SUCCESS;
+import static java.io.File.separator;
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.MapUtils;
 import com.scoperetail.fusion.core.application.port.in.command.create.PosterUseCase;
 import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
+import com.scoperetail.fusion.core.application.port.out.kafka.PosterOutboundKafkaPort;
+import com.scoperetail.fusion.core.application.port.out.mail.MailDetailsDto;
+import com.scoperetail.fusion.core.application.port.out.mail.PosterOutboundMailPort;
 import com.scoperetail.fusion.core.application.port.out.web.PosterOutboundWebPort;
 import com.scoperetail.fusion.core.application.service.transform.Transformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToDomainEventJsonFtlTransformer;
@@ -51,6 +58,7 @@ import com.scoperetail.fusion.messaging.config.Adapter.TransformationType;
 import com.scoperetail.fusion.messaging.config.Adapter.TransportType;
 import com.scoperetail.fusion.messaging.config.Config;
 import com.scoperetail.fusion.messaging.config.FusionConfig;
+import com.scoperetail.fusion.messaging.config.MailHost;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +68,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 class PosterService implements PosterUseCase {
 
+  private static final String DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH = "default";
+
   private final PosterOutboundJmsPort posterOutboundJmsPort;
+  private final PosterOutboundKafkaPort posterOutboundKafkaPort;
 
   private final PosterOutboundWebPort posterOutboundWebPort;
 
@@ -76,6 +87,8 @@ class PosterService implements PosterUseCase {
   private final DomainToStringTransformer domainToStringTransformer;
 
   private final FusionConfig fusionConfig;
+
+  private final PosterOutboundMailPort posterOutboundMailPort;
 
   @Override
   public void post(final String event, final Object domainEntity, final boolean isValid)
@@ -99,6 +112,12 @@ class PosterService implements PosterUseCase {
             break;
           case REST:
             notifyRest(event, domainEntity, adapter, transformer);
+            break;
+          case MAIL:
+            notifyMail(event, domainEntity, adapter, transformer);
+            break;
+          case KAFKA:
+            notifyKafka(event, domainEntity, adapter, transformer);
             break;
           default:
             log.error("Invalid adapter transport type: {} for adapter: {}", trasnportType, adapter);
@@ -184,8 +203,146 @@ class PosterService implements PosterUseCase {
       log.error(
           "Skipping customization. Unable to load configured customizer for event: {} customizer: {}",
           event,
-          customizerClassName.toString());
+          customizerClassName);
     }
     return params;
+  }
+
+  private void notifyMail(
+      final String event,
+      final Object domainEntity,
+      final Adapter adapter,
+      final Transformer transformer)
+      throws Exception {
+    final Optional<MailHost> optionalMailHost =
+        fusionConfig
+            .getMailHosts()
+            .stream()
+            .filter(host -> host.getHostId().equals(adapter.getHostId()))
+            .findFirst();
+    if (optionalMailHost.isPresent()) {
+      final Map<String, Object> paramsMap = new HashMap<>();
+      paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
+
+      final String templateDirBasePath = transformer.getTemplateDirBasePath(event);
+      final String templateFileExtension = transformer.getTemplateFileExtension();
+      final String lookupPath = getLookupPath(domainEntity);
+      final String from =
+          transformer.transform(
+              event,
+              paramsMap,
+              getEmailTemplateLookupPath(
+                  templateDirBasePath,
+                  lookupPath,
+                  adapter.getFromTemplate(),
+                  templateFileExtension));
+
+      final String to =
+          transformer.transform(
+              event,
+              paramsMap,
+              getEmailTemplateLookupPath(
+                  templateDirBasePath, lookupPath, adapter.getToTemplate(), templateFileExtension));
+
+      final String replyTo =
+          transformer.transform(
+              event,
+              paramsMap,
+              getEmailTemplateLookupPath(
+                  templateDirBasePath,
+                  lookupPath,
+                  adapter.getReplyToTemplate(),
+                  templateFileExtension));
+
+      final String subject =
+          transformer.transform(
+              event,
+              paramsMap,
+              getEmailTemplateLookupPath(
+                  templateDirBasePath,
+                  lookupPath,
+                  adapter.getSubjectTemplate(),
+                  templateFileExtension));
+
+      final String body =
+          transformer.transform(
+              event,
+              paramsMap,
+              getEmailTemplateLookupPath(
+                  templateDirBasePath,
+                  lookupPath,
+                  adapter.getTextTemplate(),
+                  templateFileExtension));
+
+      final MailDetailsDto mailDetailsDto =
+          MailDetailsDto.builder()
+              .mailHost(optionalMailHost.get())
+              .from(from)
+              .to(to)
+              .replyTo(replyTo)
+              .subject(subject)
+              .body(body)
+              .build();
+      posterOutboundMailPort.post(mailDetailsDto);
+    }
+  }
+
+  private String getEmailTemplateLookupPath(
+      final String templateDirBasePath,
+      final String lookupPath,
+      final String templateName,
+      final String templateFileExtension) {
+    String targetLookupPath = DEFAULT_EMAIL_TEMPLATE_LOOKUP_PATH + separator + templateName;
+
+    if (Objects.nonNull(lookupPath)) {
+      final boolean exists =
+          isLookupPathExists(templateDirBasePath, lookupPath, templateName, templateFileExtension);
+      if (exists) {
+        targetLookupPath = lookupPath + separator + templateName;
+      }
+    }
+    return targetLookupPath;
+  }
+
+  private String getLookupPath(final Object domainEntity)
+      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    String result = null;
+    final Class<? extends Object> clazz = domainEntity.getClass();
+    final Method method = clazz.getDeclaredMethod("getLookupPath", new Class[0]);
+    if (Objects.nonNull(method) && method.getReturnType().equals(String.class)) {
+      final Object object = method.invoke(domainEntity, new Object[0]);
+      if (object instanceof String) {
+        result = (String) object;
+      }
+    }
+    return result;
+  }
+
+  private boolean isLookupPathExists(
+      final String templateDirBasePath,
+      final String lookupPath,
+      final String templateName,
+      final String templateFileExtension) {
+    return new File(
+            templateDirBasePath
+                + separator
+                + lookupPath
+                + separator
+                + templateName
+                + templateFileExtension)
+        .exists();
+  }
+
+  private void notifyKafka(
+      final String event,
+      final Object domainEntity,
+      final Adapter adapter,
+      final Transformer transformer)
+      throws Exception {
+
+    final Map<String, Object> paramsMap = new HashMap<>();
+    paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
+    final String payload = transformer.transform(event, paramsMap, adapter.getTemplate());
+    posterOutboundKafkaPort.post(adapter.getBrokerId(), adapter.getTopicName(), payload);
   }
 }

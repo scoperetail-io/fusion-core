@@ -1,8 +1,8 @@
-package com.scoperetail.fusion.core.application.service.transform;
+package com.scoperetail.fusion.core.adapter.out.persistence.jpa.entity;
 
 /*-
  * *****
- * fusion-core
+ * fusion-audit-persistence
  * -----
  * Copyright (C) 2018 - 2021 Scope Retail Systems Inc.
  * -----
@@ -12,10 +12,10 @@ package com.scoperetail.fusion.core.application.service.transform;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,31 +26,26 @@ package com.scoperetail.fusion.core.application.service.transform;
  * =====
  */
 
-import java.util.Map;
+import lombok.*;
 
-import com.scoperetail.fusion.core.application.service.transform.template.engine.TemplateEngine;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
-
+@Builder
+@NoArgsConstructor
 @AllArgsConstructor
-public abstract class AbstractTransformer implements Transformer {
+@Getter
+@Setter
+@Entity
+@Table(name = "dedupe_key")
+public class DedupeKeyEntity {
+  @Id
+  @Column(name = "log_key", nullable = false)
+  private String logKey;
 
-  protected TemplateEngine templateEngine;
-
-  @Override
-  public String transform(
-      final String event, final Map<String, Object> params, final String template)
-      throws Exception {
-    return templateEngine.generateTextFromTemplate(event, params, template);
-  }
-
-  @Override
-  public String getTemplateDirBasePath(final String event) {
-    return templateEngine.getTemplateDirBasePath(event);
-  }
-
-  @Override
-  public String getTemplateFileExtension() {
-    return templateEngine.getTemplateFileExtension();
-  }
+  @Column(name = "create_ts")
+  private LocalDateTime createTs;
 }
