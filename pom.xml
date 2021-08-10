@@ -27,10 +27,9 @@
 		<lombok.version>1.18.12</lombok.version>
 		<spotless.version>2.10.0</spotless.version>
 		<fusion-shared-kernel.version>0.6</fusion-shared-kernel.version>
-		<fusion-messaging.version>0.12-SNAPSHOT</fusion-messaging.version>
+		<fusion-messaging.version>0.12</fusion-messaging.version>
 		<fusion-messaging-activemq.version>0.4</fusion-messaging-activemq.version>
 		<fusion-messaging-kafka.version>0.1</fusion-messaging-kafka.version>
-		<fusion-retry-persistence.version>0.1</fusion-retry-persistence.version>
 		<commons-time.version>0.7</commons-time.version>
 		<spring-retry.version>1.3.1</spring-retry.version>
 		<sonar.exclusions>
