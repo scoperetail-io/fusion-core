@@ -32,8 +32,8 @@ import java.util.Map;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
+import com.scoperetail.fusion.config.Adapter;
 import com.scoperetail.fusion.core.common.HttpRequest;
-import com.scoperetail.fusion.messaging.config.Adapter;
 
 public interface PosterOutboundHttpAdapter {
 

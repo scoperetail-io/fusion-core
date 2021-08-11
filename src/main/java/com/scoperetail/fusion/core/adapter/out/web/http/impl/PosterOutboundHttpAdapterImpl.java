@@ -39,13 +39,13 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
+import com.scoperetail.fusion.config.Adapter;
 import com.scoperetail.fusion.core.adapter.out.web.http.PosterOutboundHttpAdapter;
 import com.scoperetail.fusion.core.common.HttpRequest;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.core.common.LoggingInterceptor;
 import com.scoperetail.fusion.core.common.PerformanceCounter;
 import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterSender;
-import com.scoperetail.fusion.messaging.config.Adapter;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

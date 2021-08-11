@@ -12,10 +12,10 @@ package com.scoperetail.fusion.core.adapter.in.messaging.jms;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -39,15 +39,15 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.validation.Schema;
 import org.apache.commons.collections.CollectionUtils;
 import org.w3c.dom.Document;
+import com.scoperetail.fusion.config.Adapter;
+import com.scoperetail.fusion.config.Adapter.MessageType;
+import com.scoperetail.fusion.config.FusionConfig;
 import com.scoperetail.fusion.core.common.Event;
 import com.scoperetail.fusion.core.common.JaxbUtil;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.MessageListener;
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult;
 import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterReceiver;
-import com.scoperetail.fusion.messaging.config.Adapter;
-import com.scoperetail.fusion.messaging.config.Adapter.MessageType;
-import com.scoperetail.fusion.messaging.config.FusionConfig;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

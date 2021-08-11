@@ -1,5 +1,7 @@
 package com.scoperetail.fusion.core.application.service.command;
 
+import static com.scoperetail.fusion.config.Adapter.UsecaseResult.FAILURE;
+import static com.scoperetail.fusion.config.Adapter.UsecaseResult.SUCCESS;
 /*-
  * *****
  * fusion-core
@@ -25,9 +27,6 @@ package com.scoperetail.fusion.core.application.service.command;
  * THE SOFTWARE.
  * =====
  */
-
-import static com.scoperetail.fusion.messaging.application.port.in.UsecaseResult.FAILURE;
-import static com.scoperetail.fusion.messaging.application.port.in.UsecaseResult.SUCCESS;
 import static java.io.File.separator;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -39,6 +38,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.MapUtils;
+import com.scoperetail.fusion.config.Adapter;
+import com.scoperetail.fusion.config.Adapter.TransformationType;
+import com.scoperetail.fusion.config.Adapter.TransportType;
+import com.scoperetail.fusion.config.Adapter.UsecaseResult;
+import com.scoperetail.fusion.config.Config;
+import com.scoperetail.fusion.config.FusionConfig;
+import com.scoperetail.fusion.config.MailHost;
 import com.scoperetail.fusion.core.application.port.in.command.create.PosterUseCase;
 import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
 import com.scoperetail.fusion.core.application.port.out.kafka.PosterOutboundKafkaPort;
@@ -52,13 +58,6 @@ import com.scoperetail.fusion.core.application.service.transform.impl.DomainToFt
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToStringTransformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToVelocityTemplateTransformer;
 import com.scoperetail.fusion.core.common.JsonUtils;
-import com.scoperetail.fusion.messaging.application.port.in.UsecaseResult;
-import com.scoperetail.fusion.messaging.config.Adapter;
-import com.scoperetail.fusion.messaging.config.Adapter.TransformationType;
-import com.scoperetail.fusion.messaging.config.Adapter.TransportType;
-import com.scoperetail.fusion.messaging.config.Config;
-import com.scoperetail.fusion.messaging.config.FusionConfig;
-import com.scoperetail.fusion.messaging.config.MailHost;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

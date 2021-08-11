@@ -29,22 +29,18 @@ import java.util.Objects;
  */
 
 import java.util.Properties;
-
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
-
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
-
+import com.scoperetail.fusion.config.MailHost;
+import com.scoperetail.fusion.config.Smtp;
 import com.scoperetail.fusion.core.application.port.out.mail.MailDetailsDto;
 import com.scoperetail.fusion.core.application.port.out.mail.PosterOutboundMailPort;
-import com.scoperetail.fusion.messaging.config.MailHost;
-import com.scoperetail.fusion.messaging.config.Smtp;
 import com.scoperetail.fusion.shared.kernel.common.annotation.MessagingAdapter;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

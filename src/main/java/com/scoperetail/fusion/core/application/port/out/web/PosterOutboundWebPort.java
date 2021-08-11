@@ -27,7 +27,7 @@ package com.scoperetail.fusion.core.application.port.out.web;
  */
 
 import java.util.Map;
-import com.scoperetail.fusion.messaging.config.Adapter;
+import com.scoperetail.fusion.config.Adapter;
 
 public interface PosterOutboundWebPort {
 

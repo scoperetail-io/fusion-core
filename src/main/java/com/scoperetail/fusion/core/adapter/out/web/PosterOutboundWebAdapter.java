@@ -27,9 +27,9 @@ package com.scoperetail.fusion.core.adapter.out.web;
  */
 
 import java.util.Map;
+import com.scoperetail.fusion.config.Adapter;
 import com.scoperetail.fusion.core.adapter.out.web.http.PosterOutboundHttpAdapter;
 import com.scoperetail.fusion.core.application.port.out.web.PosterOutboundWebPort;
-import com.scoperetail.fusion.messaging.config.Adapter;
 import com.scoperetail.fusion.shared.kernel.common.annotation.WebAdapter;
 import lombok.AllArgsConstructor;
 

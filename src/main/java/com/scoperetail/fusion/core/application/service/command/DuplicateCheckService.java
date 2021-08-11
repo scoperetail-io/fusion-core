@@ -29,13 +29,13 @@ package com.scoperetail.fusion.core.application.service.command;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import com.scoperetail.fusion.config.FusionConfig;
+import com.scoperetail.fusion.config.UseCaseConfig;
 import com.scoperetail.fusion.core.adapter.out.persistence.jpa.DedupeJpaAdapter;
 import com.scoperetail.fusion.core.application.port.in.command.DuplicateCheckUseCase;
 import com.scoperetail.fusion.core.application.service.transform.Transformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToHashKeyFtlTemplateTransformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToHashKeyVelocityTemplateTransformer;
-import com.scoperetail.fusion.messaging.config.FusionConfig;
-import com.scoperetail.fusion.messaging.config.UseCaseConfig;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 import lombok.AllArgsConstructor;
 
