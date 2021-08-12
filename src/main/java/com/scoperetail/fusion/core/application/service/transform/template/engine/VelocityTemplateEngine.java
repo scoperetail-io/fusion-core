@@ -27,16 +27,13 @@ package com.scoperetail.fusion.core.application.service.transform.template.engin
  */
 
 import static java.io.File.separator;
-
 import java.io.StringWriter;
 import java.util.Map;
-
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -81,6 +78,6 @@ public class VelocityTemplateEngine implements TemplateEngine {
 
   @Override
   public String getTemplateFileExtension() {
-    return VM;
+    return VM_EXTENSION;
   }
 }
