@@ -1,5 +1,7 @@
 package com.scoperetail.fusion.core;
 
+import org.springframework.context.annotation.ComponentScan;
+
 /*-
  * *****
  * fusion-core
@@ -26,11 +28,12 @@ package com.scoperetail.fusion.core;
  * =====
  */
 
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.context.annotation.Import;
+import com.scoperetail.fusion.config.FusionConfiguration;
+import com.scoperetail.fusion.messaging.JmsConfig;
 
 @Configuration
-@EnableRetry
-@ComponentScan({"com.scoperetail.fusion"})
+@ComponentScan
+@Import({FusionConfiguration.class, JmsConfig.class})
 public class FusionCoreConfig {}
