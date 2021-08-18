@@ -29,6 +29,7 @@ package com.scoperetail.fusion.core.adapter.in.messaging.jms;
 import static com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult.DISCARD;
 import static com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult.SUCCESS;
 import static java.util.Optional.ofNullable;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,9 +54,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class AbstractMessageListener implements MessageListener<String> {
 
+  private static final String BO_QUEUE_SUFFIX = ".BO";
   private final MessageType messageType;
   private final Schema schema;
   private final List<String> messageIdentifiers;
+  private final String boBrokerId;
+  private final String boQueueName;
 
   protected AbstractMessageListener(
       final String usecase,
@@ -68,6 +72,12 @@ public abstract class AbstractMessageListener implements MessageListener<String>
             () -> new RuntimeException("Inbound adapter not found for usecase:" + usecase));
     this.messageType = adapter.getMessageType();
     this.messageIdentifiers = adapter.getMessageIdentifiers();
+    this.boBrokerId =
+        isNotBlank(adapter.getBoBrokerId()) ? adapter.getBoBrokerId() : adapter.getBrokerId();
+    this.boQueueName =
+        isNotBlank(adapter.getBoQueueName())
+            ? adapter.getBoQueueName()
+            : adapter.getQueueName() + BO_QUEUE_SUFFIX;
     this.schema = schema;
     messageRouterReceiver.registerListener(adapter.getBrokerId(), adapter.getQueueName(), this);
   }
@@ -121,6 +131,14 @@ public abstract class AbstractMessageListener implements MessageListener<String>
 
   protected Class getClazz() {
     return String.class;
+  }
+
+  protected String getBoBrokerId() {
+    return boBrokerId;
+  }
+
+  protected String getBoQueueName() {
+    return boQueueName;
   }
 
   private boolean isValidXmlMessageIdentifier(final String message) {
