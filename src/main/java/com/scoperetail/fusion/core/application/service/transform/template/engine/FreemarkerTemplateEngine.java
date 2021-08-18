@@ -27,16 +27,12 @@ package com.scoperetail.fusion.core.application.service.transform.template.engin
  */
 
 import static java.io.File.separator;
-
 import java.io.StringWriter;
 import java.util.Map;
-
 import javax.annotation.PostConstruct;
-
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
-
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
 import lombok.AllArgsConstructor;
@@ -87,6 +83,6 @@ public class FreemarkerTemplateEngine implements TemplateEngine {
 
   @Override
   public String getTemplateFileExtension() {
-    return FTL;
+    return FTL_EXTENSION;
   }
 }

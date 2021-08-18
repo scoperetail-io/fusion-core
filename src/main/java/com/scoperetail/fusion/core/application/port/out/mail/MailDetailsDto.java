@@ -1,5 +1,7 @@
 package com.scoperetail.fusion.core.application.port.out.mail;
 
+import com.scoperetail.fusion.config.MailHost;
+
 /*-
  * *****
  * fusion-core
@@ -25,8 +27,6 @@ package com.scoperetail.fusion.core.application.port.out.mail;
  * THE SOFTWARE.
  * =====
  */
-
-import com.scoperetail.fusion.messaging.config.MailHost;
 
 import lombok.Builder;
 import lombok.Getter;

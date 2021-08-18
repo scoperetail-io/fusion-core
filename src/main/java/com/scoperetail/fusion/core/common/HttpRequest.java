@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.config;
+package com.scoperetail.fusion.core.common;
 
 /*-
  * *****
@@ -26,12 +26,20 @@ package com.scoperetail.fusion.core.config;
  * =====
  */
 
-import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Configuration
-@EnableJpaRepositories(basePackages = "com.scoperetail.fusion.core.adapter.out.persistence.jpa.repository")
-@EntityScan(basePackages = "com.scoperetail.fusion.core.adapter.out.persistence.jpa.entity")
-public class FusionCoreJpaConfig {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class HttpRequest {
+  private String url;
+  private Map<String, String> queryParams;
+  private String methodType;
+  private Map<String, String> httpHeaders;
+  private String requestBody;
 }

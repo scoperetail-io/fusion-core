@@ -12,10 +12,10 @@ package com.scoperetail.fusion.core.application.service.command;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,13 +29,13 @@ package com.scoperetail.fusion.core.application.service.command;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import com.scoperetail.fusion.config.FusionConfig;
+import com.scoperetail.fusion.config.UseCaseConfig;
 import com.scoperetail.fusion.core.adapter.out.persistence.jpa.DedupeJpaAdapter;
 import com.scoperetail.fusion.core.application.port.in.command.DuplicateCheckUseCase;
 import com.scoperetail.fusion.core.application.service.transform.Transformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToHashKeyFtlTemplateTransformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToHashKeyVelocityTemplateTransformer;
-import com.scoperetail.fusion.messaging.config.FusionConfig;
-import com.scoperetail.fusion.messaging.config.UseCaseConfig;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 import lombok.AllArgsConstructor;
 
@@ -50,9 +50,7 @@ public class DuplicateCheckService implements DuplicateCheckUseCase {
   @Override
   public boolean isDuplicate(final String eventName, final Object domainEntity) throws Exception {
     boolean isDuplicate = false;
-    final Optional<UseCaseConfig> optUseCase =
-        fusionConfig.getUsecases().stream().filter(u -> u.getName().equals(eventName)).findFirst();
-
+    final Optional<UseCaseConfig> optUseCase = fusionConfig.getUsecase(eventName);
     if (optUseCase.isPresent() && optUseCase.get().getDedupeCheck()) {
       final UseCaseConfig useCase = optUseCase.get();
       final String templateName = useCase.getHashKeyTemplate();
@@ -69,7 +67,8 @@ public class DuplicateCheckService implements DuplicateCheckUseCase {
   private Transformer getTransformer(
       final UseCaseConfig.HashKeyTransformationType transformationType) {
     Transformer transformer;
-    if (transformationType == UseCaseConfig.HashKeyTransformationType.HASH_KEY_VELOCITY_TRANSFORMER) {
+    if (transformationType
+        == UseCaseConfig.HashKeyTransformationType.HASH_KEY_VELOCITY_TRANSFORMER) {
       transformer = hashKeyVelocityTemplateTransformer;
     } else {
       transformer = hashKeyFtlTemplateTransformer;

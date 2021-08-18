@@ -26,54 +26,60 @@ package com.scoperetail.fusion.core.adapter.in.messaging.jms;
  * =====
  */
 
-import static com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult.FAILURE;
+import static com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult.DISCARD;
 import static com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult.SUCCESS;
 import static java.util.Optional.ofNullable;
-
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Optional;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.validation.Schema;
-
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.w3c.dom.Document;
-
+import com.scoperetail.fusion.config.Adapter;
+import com.scoperetail.fusion.config.Adapter.MessageType;
+import com.scoperetail.fusion.config.FusionConfig;
 import com.scoperetail.fusion.core.common.Event;
 import com.scoperetail.fusion.core.common.JaxbUtil;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.MessageListener;
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult;
 import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterReceiver;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractMessageListener implements MessageListener<String> {
 
+  private static final String BO_QUEUE_SUFFIX = ".BO";
   private final MessageType messageType;
   private final Schema schema;
-  private final String messageIdentifier;
-
-  protected enum MessageType {
-    XML,
-    JSON
-  }
+  private final List<String> messageIdentifiers;
+  private final String boBrokerId;
+  private final String boQueueName;
 
   protected AbstractMessageListener(
-      final String broker,
-      final String queue,
-      final MessageType messageType,
+      final String usecase,
       final Schema schema,
-      final String messageIdentifier,
-      final MessageRouterReceiver messageRouterReceiver) {
-    this.messageType = messageType;
+      final MessageRouterReceiver messageRouterReceiver,
+      final FusionConfig fusionConfig) {
+    final Optional<Adapter> optAdapter = fusionConfig.getInboundAdapter(usecase);
+    final Adapter adapter =
+        optAdapter.orElseThrow(
+            () -> new RuntimeException("Inbound adapter not found for usecase:" + usecase));
+    this.messageType = adapter.getMessageType();
+    this.messageIdentifiers = adapter.getMessageIdentifiers();
+    this.boBrokerId =
+        isNotBlank(adapter.getBoBrokerId()) ? adapter.getBoBrokerId() : adapter.getBrokerId();
+    this.boQueueName =
+        isNotBlank(adapter.getBoQueueName())
+            ? adapter.getBoQueueName()
+            : adapter.getQueueName() + BO_QUEUE_SUFFIX;
     this.schema = schema;
-    this.messageIdentifier = messageIdentifier;
-    messageRouterReceiver.registerListener(broker, queue, this);
+    messageRouterReceiver.registerListener(adapter.getBrokerId(), adapter.getQueueName(), this);
   }
 
   @Override
@@ -106,9 +112,11 @@ public abstract class AbstractMessageListener implements MessageListener<String>
         log.error("Unable to unmarshal incoming message: {} Exception occured: {}", message, t);
         isValid = false;
       }
+      if (isValid) {
+        handleMessage(object);
+      }
     }
-    handleMessage(object, isValid);
-    return isValid ? SUCCESS : FAILURE;
+    return isValid ? SUCCESS : DISCARD;
   }
 
   protected boolean validate(final String message) {
@@ -119,10 +127,18 @@ public abstract class AbstractMessageListener implements MessageListener<String>
     return result;
   }
 
-  protected abstract void handleMessage(Object event, boolean isValid) throws Exception;
+  protected abstract void handleMessage(Object event) throws Exception;
 
   protected Class getClazz() {
     return String.class;
+  }
+
+  protected String getBoBrokerId() {
+    return boBrokerId;
+  }
+
+  protected String getBoQueueName() {
+    return boQueueName;
   }
 
   private boolean isValidXmlMessageIdentifier(final String message) {
@@ -133,8 +149,7 @@ public abstract class AbstractMessageListener implements MessageListener<String>
       final InputStream is = new ByteArrayInputStream(message.getBytes());
       final Document document = documentBuilder.parse(is);
       final String rootElement = document.getDocumentElement().getNodeName();
-      // contains instaed of equals
-      canHandle = messageIdentifier.equals(rootElement);
+      canHandle = messageIdentifiers.contains(rootElement);
     } catch (final Exception e) {
       log.error("Invalid XMl message: {} exception: {}", message, e);
     }
@@ -143,10 +158,10 @@ public abstract class AbstractMessageListener implements MessageListener<String>
 
   private boolean isValidJsonMessageIdentifier(final String message) {
     boolean canHandle = false;
-    if (StringUtils.isNotBlank(messageIdentifier)) {
+    if (CollectionUtils.isNotEmpty(messageIdentifiers)) {
       try {
         final Event event = unmarshal(message);
-        canHandle = messageIdentifier.equals(event.getEventName());
+        canHandle = messageIdentifiers.contains(event.getEventName());
       } catch (final Exception e) {
         log.error("Invalid JSON message: {} exception: {}", message, e);
       }

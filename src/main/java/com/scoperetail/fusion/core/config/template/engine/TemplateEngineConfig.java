@@ -1,8 +1,8 @@
-package com.scoperetail.fusion.core.adapter.out.persistence.jpa.repository;
+package com.scoperetail.fusion.core.config.template.engine;
 
 /*-
  * *****
- * fusion-audit-persistence
+ * fusion-core
  * -----
  * Copyright (C) 2018 - 2021 Scope Retail Systems Inc.
  * -----
@@ -26,30 +26,32 @@ package com.scoperetail.fusion.core.adapter.out.persistence.jpa.repository;
  * =====
  */
 
-import com.scoperetail.fusion.core.adapter.out.persistence.jpa.entity.DedupeKeyEntity;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.exception.VelocityException;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 
-import javax.transaction.Transactional;
-import java.time.LocalDateTime;
-import java.util.List;
+@Configuration
+public class TemplateEngineConfig {
 
-@Repository
-public interface DedupeKeyRepository extends JpaRepository<DedupeKeyEntity, String> {
-  @Transactional
-  @Modifying
-  @Query(name = "dedupeKey.jpa.insert", nativeQuery = true)
-  Integer insertIfNotExist(@Param("logKey") String logKey);
+  @Bean
+  public VelocityEngine getVelocityEngine() throws VelocityException {
+    final VelocityEngine velocityEngine = new VelocityEngine();
+    velocityEngine.setProperty("resource.loader", "class");
+    velocityEngine.setProperty("class.resource.loader.class",
+        "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+    velocityEngine.init();
+    return velocityEngine;
+  }
 
-  @Query(name = "dedupe.keys.to.erase")
-  List<String> findDedupeKeysToErase(@Param("pivoteDate") LocalDateTime pivoteDate, Pageable pageable);
+  @Bean
+  public FreeMarkerConfigurer freeMarkerConfigurer() {
+    FreeMarkerConfigurer freeMarkerConfigurer = new FreeMarkerConfigurer();
+    freeMarkerConfigurer.setTemplateLoaderPath("classpath:/usecases");
+    freeMarkerConfigurer.setDefaultEncoding("UTF-8");
+    return freeMarkerConfigurer;
+  }
 
-  @Query(name = "delete.dedupe.key")
-  @Modifying
-  @Transactional
-  Integer deleteDedupeKey(@Param("logKeyList") List<String> logKeyList);
+
 }
