@@ -45,7 +45,7 @@
 		<fusion-shared-kernel.version>0.6</fusion-shared-kernel.version>
 		<fusion-config.version>0.2</fusion-config.version>
 		<fusion-messaging.version>0.12</fusion-messaging.version>
-		<fusion-messaging-activemq.version>0.7</fusion-messaging-activemq.version>
+		<fusion-messaging-activemq.version>0.8</fusion-messaging-activemq.version>
 		<fusion-messaging-kafka.version>0.2</fusion-messaging-kafka.version>
 		<fusion-adapter-dedupe.version>0.2</fusion-adapter-dedupe.version>
 		<commons-time.version>0.7</commons-time.version>
