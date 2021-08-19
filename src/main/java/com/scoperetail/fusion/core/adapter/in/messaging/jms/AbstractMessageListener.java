@@ -54,6 +54,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class AbstractMessageListener implements MessageListener<String> {
 
+  private static final String DEFAULT_READ_CONCURRENCY = "5-10";
   private static final String BO_QUEUE_SUFFIX = ".BO";
   private final MessageType messageType;
   private final Schema schema;
@@ -78,8 +79,13 @@ public abstract class AbstractMessageListener implements MessageListener<String>
         isNotBlank(adapter.getBoQueueName())
             ? adapter.getBoQueueName()
             : adapter.getQueueName() + BO_QUEUE_SUFFIX;
+    final String readConcurrency =
+        isNotBlank(adapter.getReadConcurrency())
+            ? adapter.getReadConcurrency()
+            : DEFAULT_READ_CONCURRENCY;
     this.schema = schema;
-    messageRouterReceiver.registerListener(adapter.getBrokerId(), adapter.getQueueName(), this);
+    messageRouterReceiver.registerListener(
+        adapter.getBrokerId(), adapter.getQueueName(), readConcurrency, this);
   }
 
   @Override
