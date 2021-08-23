@@ -28,7 +28,8 @@ import static com.scoperetail.fusion.config.Adapter.UsecaseResult.SUCCESS;
  * =====
  */
 import static java.io.File.separator;
-import java.io.File;
+
+import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -37,7 +38,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import org.apache.commons.collections.MapUtils;
+import org.springframework.util.ResourceUtils;
+
 import com.scoperetail.fusion.config.Adapter;
 import com.scoperetail.fusion.config.Adapter.TransformationType;
 import com.scoperetail.fusion.config.Adapter.TransportType;
@@ -59,6 +63,7 @@ import com.scoperetail.fusion.core.application.service.transform.impl.DomainToSt
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToVelocityTemplateTransformer;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -322,14 +327,19 @@ class PosterService implements PosterUseCase {
       final String lookupPath,
       final String templateName,
       final String templateFileExtension) {
-    return new File(
-            templateDirBasePath
-                + separator
-                + lookupPath
-                + separator
-                + templateName
-                + templateFileExtension)
-        .exists();
+    try {
+      ResourceUtils.getFile(
+          "classpath:"
+              + templateDirBasePath
+              + separator
+              + lookupPath
+              + separator
+              + templateName
+              + templateFileExtension);
+      return true;
+    } catch (final FileNotFoundException e) {
+      return false;
+    }
   }
 
   private void notifyKafka(
