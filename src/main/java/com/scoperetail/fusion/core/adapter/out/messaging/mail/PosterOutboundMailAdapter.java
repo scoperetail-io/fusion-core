@@ -84,9 +84,12 @@ public class PosterOutboundMailAdapter implements PosterOutboundMailPort {
     final Properties props = mailSender.getJavaMailProperties();
     final Smtp smtp = mailHost.getSmtp();
     props.put("mail.transport.protocol", mailHost.getTransportProtocol());
+    props.put("mail.debug", mailHost.isDebugEnabled());
     props.put("mail.smtp.auth", smtp.isAuth());
     props.put("mail.smtp.starttls.enable", smtp.isStartTtlsEnabled());
-    props.put("mail.debug", mailHost.isDebugEnabled());
+    props.put("mail.smtp.starttls.required", smtp.isStarttlsRequired());
+    props.put("mail.smtp.ssl.protocols", smtp.getSslProtocols());
+    props.put("mail.smtp.socketFactory.class", smtp.getSocketFactoryClass());
     return mailSender;
   }
 
