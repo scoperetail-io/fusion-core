@@ -1,6 +1,4 @@
-package com.scoperetail.fusion.core.adapter.out.web.http;
-
-import java.io.IOException;
+package com.scoperetail.fusion.core.application.port.in.command;
 
 /*-
  * *****
@@ -14,10 +12,10 @@ import java.io.IOException;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,30 +26,11 @@ import java.io.IOException;
  * =====
  */
 
-import java.util.Map;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
-import com.scoperetail.fusion.config.Adapter;
-import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
+public interface HashServiceUseCase {
 
-public interface PosterOutboundHttpAdapter {
+  String getHashKeyJson(final String eventName, final Object domainEntity) throws Exception;
 
-  @Retryable(
-    value = {RuntimeException.class},
-    maxAttemptsExpression = "#{${fusion.restRetryPolicy.maxAttempt}}",
-    backoff = @Backoff(delayExpression = "#{${fusion.restRetryPolicy.backoffMS}}")
-  )
-  void post(Adapter adapter, String url, String requestBody, Map<String, String> httpHeaders);
+  String generateHash(String hashKeyJson);
 
-  void post(HttpRequest httpRequest);
-
-  @Recover
-  void recover(
-      RuntimeException e,
-      Adapter adapter,
-      String url,
-      String requestBody,
-      Map<String, String> httpHeaders)
-      throws IOException;
+  String generateHash(String eventName, Object domainEntity) throws Exception;
 }

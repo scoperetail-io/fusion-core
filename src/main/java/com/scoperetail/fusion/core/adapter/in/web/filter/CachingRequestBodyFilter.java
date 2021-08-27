@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.common;
+package com.scoperetail.fusion.core.adapter.in.web.filter;
 
 /*-
  * *****
@@ -26,20 +26,28 @@ package com.scoperetail.fusion.core.common;
  * =====
  */
 
-import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.io.IOException;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class HttpRequest {
-  private String url;
-  private Map<String, String> queryParams;
-  private String methodType;
-  private Map<String, String> httpHeaders;
-  private String requestBody;
+@Component
+public class CachingRequestBodyFilter extends GenericFilterBean {
+
+  @Override
+  public void doFilter(
+      final ServletRequest servletRequest,
+      final ServletResponse servletResponse,
+      final FilterChain chain)
+      throws IOException, ServletException {
+    final HttpServletRequest currentRequest = (HttpServletRequest) servletRequest;
+    final ContentCachingRequestWrapper wrappedRequest =
+        new ContentCachingRequestWrapper(currentRequest);
+    chain.doFilter(wrappedRequest, servletResponse);
+  }
 }

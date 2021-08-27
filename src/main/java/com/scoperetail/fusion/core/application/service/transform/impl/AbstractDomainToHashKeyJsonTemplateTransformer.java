@@ -1,6 +1,6 @@
-package com.scoperetail.fusion.core.adapter.out.web.http;
+package com.scoperetail.fusion.core.application.service.transform.impl;
 
-import java.io.IOException;
+import java.util.Map;
 
 /*-
  * *****
@@ -28,30 +28,18 @@ import java.io.IOException;
  * =====
  */
 
-import java.util.Map;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
-import com.scoperetail.fusion.config.Adapter;
-import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
+import com.scoperetail.fusion.core.application.service.transform.AbstractTransformer;
+import com.scoperetail.fusion.core.application.service.transform.template.engine.TemplateEngine;
 
-public interface PosterOutboundHttpAdapter {
+public abstract class AbstractDomainToHashKeyJsonTemplateTransformer extends AbstractTransformer {
 
-  @Retryable(
-    value = {RuntimeException.class},
-    maxAttemptsExpression = "#{${fusion.restRetryPolicy.maxAttempt}}",
-    backoff = @Backoff(delayExpression = "#{${fusion.restRetryPolicy.backoffMS}}")
-  )
-  void post(Adapter adapter, String url, String requestBody, Map<String, String> httpHeaders);
+  public AbstractDomainToHashKeyJsonTemplateTransformer(final TemplateEngine templateEngine) {
+    super(templateEngine);
+  }
 
-  void post(HttpRequest httpRequest);
-
-  @Recover
-  void recover(
-      RuntimeException e,
-      Adapter adapter,
-      String url,
-      String requestBody,
-      Map<String, String> httpHeaders)
-      throws IOException;
+  @Override
+  public String transform(
+      final String event, final Map<String, Object> params, final String templateName) {
+    return templateEngine.generateTextFromTemplate(event, params, templateName);
+  }
 }

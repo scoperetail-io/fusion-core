@@ -1,5 +1,7 @@
 package com.scoperetail.fusion.core.application.service.transform.impl;
 
+import org.springframework.stereotype.Component;
+
 /*-
  * *****
  * fusion-core
@@ -12,10 +14,10 @@ package com.scoperetail.fusion.core.application.service.transform.impl;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,21 +28,12 @@ package com.scoperetail.fusion.core.application.service.transform.impl;
  * =====
  */
 
-import com.scoperetail.fusion.core.application.service.transform.AbstractTransformer;
-import com.scoperetail.fusion.core.application.service.transform.template.engine.TemplateEngine;
-import com.scoperetail.fusion.core.common.HashUtil;
+import com.scoperetail.fusion.core.application.service.transform.template.engine.FreemarkerTemplateEngine;
 
-import java.util.Map;
-
-public abstract class AbstractDomainToHashKeyTemplateTransformer extends AbstractTransformer {
-
-  public AbstractDomainToHashKeyTemplateTransformer(TemplateEngine templateEngine) {
+@Component
+public class DomainToHashKeyJsonFtlTemplateTransformer
+    extends AbstractDomainToHashKeyJsonTemplateTransformer {
+  public DomainToHashKeyJsonFtlTemplateTransformer(final FreemarkerTemplateEngine templateEngine) {
     super(templateEngine);
-  }
-
-  @Override
-  public String transform(final String event, final Map<String, Object> params, final String templateName) {
-    final String keyJson = templateEngine.generateTextFromTemplate(event, params, templateName);
-    return HashUtil.getHash(keyJson, HashUtil.SHA3_512);
   }
 }

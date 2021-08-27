@@ -1,4 +1,4 @@
-package com.scoperetail.fusion.core.application.service.transform.impl;
+package com.scoperetail.fusion.core.application.port.in.command;
 
 /*-
  * *****
@@ -26,12 +26,7 @@ package com.scoperetail.fusion.core.application.service.transform.impl;
  * =====
  */
 
-import com.scoperetail.fusion.core.application.service.transform.template.engine.FreemarkerTemplateEngine;
-import org.springframework.stereotype.Component;
+public interface AuditUseCase {
 
-@Component
-public class DomainToHashKeyFtlTemplateTransformer extends AbstractDomainToHashKeyTemplateTransformer {
-  public DomainToHashKeyFtlTemplateTransformer(final FreemarkerTemplateEngine templateEngine) {
-    super(templateEngine);
-  }
+  void createAudit(String event, Object domainEntity) throws Exception;
 }

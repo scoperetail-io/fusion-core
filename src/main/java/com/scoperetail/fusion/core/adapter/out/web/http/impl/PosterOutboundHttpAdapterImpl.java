@@ -41,7 +41,7 @@ import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import com.scoperetail.fusion.config.Adapter;
 import com.scoperetail.fusion.core.adapter.out.web.http.PosterOutboundHttpAdapter;
-import com.scoperetail.fusion.core.common.HttpRequest;
+import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.core.common.LoggingInterceptor;
 import com.scoperetail.fusion.core.common.PerformanceCounter;

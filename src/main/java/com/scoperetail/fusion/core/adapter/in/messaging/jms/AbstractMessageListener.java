@@ -106,6 +106,9 @@ public abstract class AbstractMessageListener implements MessageListener<String>
   }
 
   @Override
+  public void auditMessage(final String message) {}
+
+  @Override
   public TaskResult doTask(final String message) throws Exception {
     Object object = message;
     boolean isValid = validate(message);

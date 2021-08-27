@@ -42,9 +42,9 @@
 	<properties>
 		<httpclient.version>4.5.13</httpclient.version>
 		<spring.version>2.4.5</spring.version>
-		<fusion-shared-kernel.version>0.6</fusion-shared-kernel.version>
-		<fusion-config.version>0.3</fusion-config.version>
-		<fusion-messaging.version>0.13</fusion-messaging.version>
+		<fusion-shared-kernel.version>0.7</fusion-shared-kernel.version>
+		<fusion-config.version>0.4</fusion-config.version>
+		<fusion-messaging.version>0.14</fusion-messaging.version>
 		<fusion-messaging-activemq.version>0.9</fusion-messaging-activemq.version>
 		<fusion-messaging-kafka.version>0.2</fusion-messaging-kafka.version>
 		<fusion-adapter-dedupe.version>0.2</fusion-adapter-dedupe.version>
