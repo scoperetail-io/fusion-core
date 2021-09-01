@@ -27,16 +27,10 @@ package com.scoperetail.fusion.core.application.service.command;
  */
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.apache.commons.lang3.StringUtils;
 import com.scoperetail.fusion.config.Adapter.TransportType;
-import com.scoperetail.fusion.config.AuditConfig;
-import com.scoperetail.fusion.config.FusionConfig;
 import com.scoperetail.fusion.core.adapter.out.messaging.jms.PosterOutboundJMSAdapter;
 import com.scoperetail.fusion.core.application.port.in.command.AuditUseCase;
 import com.scoperetail.fusion.core.application.port.in.command.HashServiceUseCase;
@@ -44,67 +38,85 @@ import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.AuditType;
-import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
+import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
+import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
 import lombok.AllArgsConstructor;
 
 @UseCase
 @AllArgsConstructor
 public class AuditService implements AuditUseCase {
-  private final FusionConfig fusionConfig;
   private final HashServiceUseCase hashServiceUseCase;
   private final PosterOutboundJMSAdapter posterOutboundJMSAdapter;
 
   @Override
-  public void createAudit(final String event, final Object domainEntity) throws Exception {
-    final String hashKeyJson = hashServiceUseCase.getHashKeyJson(event, domainEntity);
+  public void createAudit(
+      final String usecase,
+      final Result result,
+      final Outcome outcome,
+      final TransportType transportType,
+      final AuditType auditType,
+      final String hashKeyJson,
+      final String hashKey,
+      final String payload,
+      final String brokerId,
+      final String queueName)
+      throws Exception {
+    final DomainEvent domainEvent =
+        buildDomainEvent(
+            usecase, result, outcome, transportType, auditType, hashKeyJson, hashKey, payload);
+    posterOutboundJMSAdapter.post(brokerId, queueName, JsonUtils.marshal(Optional.of(domainEvent)));
+  }
+
+  @Override
+  public void createAudit(
+      final String usecase,
+      final Result result,
+      final Outcome outcome,
+      final TransportType transportType,
+      final AuditType auditType,
+      final Object domainEntity,
+      final String payload,
+      final String brokerId,
+      final String queueName)
+      throws Exception {
+    final String hashKeyJson = hashServiceUseCase.getHashKeyJson(usecase, domainEntity);
     final String hashKey = hashServiceUseCase.generateHash(hashKeyJson);
-    final HttpRequest httpRequest = buildHttpRequest();
-    final DomainEvent domainEvent = buildDomainEvent(event, hashKeyJson, hashKey, httpRequest);
-    final AuditConfig auditConfig = fusionConfig.getAuditConfig();
-    posterOutboundJMSAdapter.post(
-        auditConfig.getBrokerId(),
-        auditConfig.getQueueName(),
-        JsonUtils.marshal(Optional.of(domainEvent)));
+    createAudit(
+        usecase,
+        result,
+        outcome,
+        transportType,
+        auditType,
+        hashKeyJson,
+        hashKey,
+        payload,
+        brokerId,
+        queueName);
   }
 
   private DomainEvent buildDomainEvent(
       final String event,
+      final Result result,
+      final Outcome outcome,
+      final TransportType transportType,
+      final AuditType auditType,
       final String hashKeyJson,
       final String hashKey,
-      final HttpRequest httpRequest)
+      final String payload)
       throws IOException {
+    Map<String, String> keyMap = null;
+    if (StringUtils.isNotBlank(hashKeyJson)) {
+      keyMap = getkeyMap(hashKeyJson);
+    }
     return DomainEvent.builder()
         .event(event)
-        .auditType(AuditType.IN)
         .eventId(hashKey)
-        .keyMap(getkeyMap(hashKeyJson))
-        .transportType(TransportType.REST.name())
-        .payload(JsonUtils.marshal(Optional.of(httpRequest)))
-        .build();
-  }
-
-  private HttpRequest buildHttpRequest() {
-    final ServletRequestAttributes currentRequestAttributes =
-        (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
-    final ContentCachingRequestWrapper requestWrapper =
-        (ContentCachingRequestWrapper) currentRequestAttributes.getRequest();
-
-    final Map<String, String> queryParamsByNameMap =
-        Collections.list(requestWrapper.getParameterNames())
-            .stream()
-            .collect(Collectors.toMap(paramName -> paramName, requestWrapper::getParameter));
-
-    final Map<String, String> headersByNameMap =
-        Collections.list(requestWrapper.getHeaderNames())
-            .stream()
-            .collect(Collectors.toMap(headerName -> headerName, requestWrapper::getHeader));
-
-    return HttpRequest.builder()
-        .url(requestWrapper.getRequestURL().toString())
-        .queryParams(queryParamsByNameMap)
-        .httpHeaders(headersByNameMap)
-        .methodType(requestWrapper.getMethod())
-        .requestBody(new String(requestWrapper.getContentAsByteArray()))
+        .transportType(transportType.name())
+        .auditType(auditType)
+        .result(result)
+        .outcome(outcome)
+        .keyMap(keyMap)
+        .payload(payload)
         .build();
   }
 

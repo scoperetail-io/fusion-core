@@ -12,10 +12,10 @@ package com.scoperetail.fusion.core.application.service.command;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -47,9 +47,9 @@ public class HashService implements HashServiceUseCase {
   private DomainToHashKeyJsonVelocityTemplateTransformer hashKeyVelocityTemplateTransformer;
 
   @Override
-  public String getHashKeyJson(final String eventName, final Object domainEntity) throws Exception {
+  public String getHashKeyJson(final String usecase, final Object domainEntity) throws Exception {
     String hashKeyJson = null;
-    final Optional<UseCaseConfig> optUseCase = fusionConfig.getUsecase(eventName);
+    final Optional<UseCaseConfig> optUseCase = fusionConfig.getUsecase(usecase);
     if (optUseCase.isPresent()) {
       final UseCaseConfig useCase = optUseCase.get();
       final String templateName = useCase.getHashKeyTemplate();
@@ -57,7 +57,7 @@ public class HashService implements HashServiceUseCase {
 
       final Map<String, Object> paramsMap = new HashMap<>();
       paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
-      hashKeyJson = transformer.transform(eventName, paramsMap, templateName);
+      hashKeyJson = transformer.transform(usecase, paramsMap, templateName);
     }
     return hashKeyJson;
   }
@@ -68,8 +68,8 @@ public class HashService implements HashServiceUseCase {
   }
 
   @Override
-  public String generateHash(final String eventName, final Object domainEntity) throws Exception {
-    return generateHash(getHashKeyJson(eventName, domainEntity));
+  public String generateHash(final String usecase, final Object domainEntity) throws Exception {
+    return generateHash(getHashKeyJson(usecase, domainEntity));
   }
 
   private Transformer getTransformer(

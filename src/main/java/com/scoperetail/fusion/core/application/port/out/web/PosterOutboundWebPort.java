@@ -31,5 +31,13 @@ import com.scoperetail.fusion.config.Adapter;
 
 public interface PosterOutboundWebPort {
 
-  void post(Adapter adapter, String url, String requestBody, Map<String, String> httpHeaders);
+  void post(
+      String usecase,
+      String hashKeyJson,
+      String hashKey,
+      Adapter adapter,
+      String url,
+      String requestBody,
+      Map<String, String> httpHeaders)
+      throws Exception;
 }

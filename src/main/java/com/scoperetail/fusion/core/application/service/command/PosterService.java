@@ -1,7 +1,11 @@
 package com.scoperetail.fusion.core.application.service.command;
 
+import static com.scoperetail.fusion.config.Adapter.TransportType.JMS;
 import static com.scoperetail.fusion.config.Adapter.UsecaseResult.FAILURE;
 import static com.scoperetail.fusion.config.Adapter.UsecaseResult.SUCCESS;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.AuditType.OUT;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.COMPLETE;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.ONLINE_RETRY;
 /*-
  * *****
  * fusion-core
@@ -28,7 +32,6 @@ import static com.scoperetail.fusion.config.Adapter.UsecaseResult.SUCCESS;
  * =====
  */
 import static java.io.File.separator;
-
 import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -38,17 +41,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.apache.commons.collections.MapUtils;
 import org.springframework.util.ResourceUtils;
-
 import com.scoperetail.fusion.config.Adapter;
 import com.scoperetail.fusion.config.Adapter.TransformationType;
 import com.scoperetail.fusion.config.Adapter.TransportType;
 import com.scoperetail.fusion.config.Adapter.UsecaseResult;
+import com.scoperetail.fusion.config.AuditConfig;
 import com.scoperetail.fusion.config.Config;
 import com.scoperetail.fusion.config.FusionConfig;
 import com.scoperetail.fusion.config.MailHost;
+import com.scoperetail.fusion.core.application.port.in.command.AuditUseCase;
+import com.scoperetail.fusion.core.application.port.in.command.HashServiceUseCase;
 import com.scoperetail.fusion.core.application.port.in.command.create.PosterUseCase;
 import com.scoperetail.fusion.core.application.port.out.jms.PosterOutboundJmsPort;
 import com.scoperetail.fusion.core.application.port.out.kafka.PosterOutboundKafkaPort;
@@ -63,7 +67,9 @@ import com.scoperetail.fusion.core.application.service.transform.impl.DomainToSt
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToVelocityTemplateTransformer;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
-
+import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
+import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
+import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEvent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -94,15 +100,19 @@ class PosterService implements PosterUseCase {
 
   private final PosterOutboundMailPort posterOutboundMailPort;
 
+  private final AuditUseCase auditUseCase;
+
+  private final HashServiceUseCase hashServiceUseCase;
+
   @Override
-  public void post(final String event, final Object domainEntity, final boolean isValid)
+  public void post(final String usecase, final Object domainEntity, final boolean isValid)
       throws Exception {
-    handleEvent(event, domainEntity, isValid);
+    handleEvent(usecase, domainEntity, isValid);
   }
 
-  private void handleEvent(final String event, final Object domainEntity, final boolean isValid)
+  private void handleEvent(final String usecase, final Object domainEntity, final boolean isValid)
       throws Exception {
-    final Optional<Config> optActiveConfig = fusionConfig.getActiveConfig(event);
+    final Optional<Config> optActiveConfig = fusionConfig.getActiveConfig(usecase);
     if (optActiveConfig.isPresent()) {
       final UsecaseResult usecaseResult = isValid ? SUCCESS : FAILURE;
       final List<Adapter> adapters = getAdapters(usecaseResult, optActiveConfig.get());
@@ -112,16 +122,16 @@ class PosterService implements PosterUseCase {
         final TransportType trasnportType = adapter.getTrasnportType();
         switch (trasnportType) {
           case JMS:
-            notifyJms(event, domainEntity, adapter, transformer);
+            notifyJms(usecase, domainEntity, adapter, transformer);
             break;
           case REST:
-            notifyRest(event, domainEntity, adapter, transformer);
+            notifyRest(usecase, domainEntity, adapter, transformer);
             break;
           case MAIL:
-            notifyMail(event, domainEntity, adapter, transformer);
+            notifyMail(usecase, domainEntity, adapter, transformer);
             break;
           case KAFKA:
-            notifyKafka(event, domainEntity, adapter, transformer);
+            notifyKafka(usecase, domainEntity, adapter, transformer);
             break;
           default:
             log.error("Invalid adapter transport type: {} for adapter: {}", trasnportType, adapter);
@@ -164,36 +174,78 @@ class PosterService implements PosterUseCase {
   }
 
   private void notifyJms(
-      final String event,
+      final String usecase,
       final Object domainEntity,
       final Adapter adapter,
       final Transformer transformer)
       throws Exception {
-    final Map<String, Object> paramsMap = new HashMap<>();
-    paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
-    final String payload = transformer.transform(event, paramsMap, adapter.getTemplate());
-    posterOutboundJmsPort.post(adapter.getBrokerId(), adapter.getQueueName(), payload);
+    String payload = null;
+    Result result = Result.FAILURE;
+    Outcome outcome = ONLINE_RETRY;
+    try {
+      final Map<String, Object> paramsMap = new HashMap<>();
+      paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
+      payload = transformer.transform(usecase, paramsMap, adapter.getTemplate());
+      posterOutboundJmsPort.post(adapter.getBrokerId(), adapter.getQueueName(), payload);
+      result = Result.SUCCESS;
+      outcome = COMPLETE;
+    } finally {
+      createAudit(usecase, result, outcome, domainEntity, adapter, payload);
+    }
+  }
+
+  private void createAudit(
+      final String usecase,
+      final Result result,
+      final Outcome outcome,
+      final Object domainEntity,
+      final Adapter adapter,
+      final String payload)
+      throws Exception {
+    final AuditConfig auditConfig = fusionConfig.getAuditConfig();
+    if (auditConfig != null && auditConfig.isEnabled()) {
+      final JMSEvent jmsEvent =
+          JMSEvent.builder()
+              .brokerId(adapter.getBrokerId())
+              .queueName(adapter.getQueueName())
+              .payload(payload)
+              .build();
+      auditUseCase.createAudit(
+          usecase,
+          result,
+          outcome,
+          JMS,
+          OUT,
+          domainEntity,
+          JsonUtils.marshal(Optional.of(jmsEvent)),
+          auditConfig.getBrokerId(),
+          auditConfig.getQueueName());
+    }
   }
 
   private void notifyRest(
-      final String event,
+      final String usecase,
       final Object domainEntity,
       final Adapter adapter,
       final Transformer transformer)
       throws Exception {
     final Map<String, Object> paramsMap = new HashMap<>();
     paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
-    paramsMap.putAll(getCustomParams(event, domainEntity, adapter.getTemplateCustomizer()));
+    paramsMap.putAll(getCustomParams(usecase, domainEntity, adapter.getTemplateCustomizer()));
     final String requestHeader =
-        transformer.transform(event, paramsMap, adapter.getRequestHeaderTemplate());
+        transformer.transform(usecase, paramsMap, adapter.getRequestHeaderTemplate());
     final Map<String, String> httpHeadersMap =
         JsonUtils.unmarshal(Optional.ofNullable(requestHeader), Map.class.getCanonicalName());
     final String requestBody =
-        transformer.transform(event, paramsMap, adapter.getRequestBodyTemplate());
-    final String uri = transformer.transform(event, paramsMap, adapter.getUriTemplate());
+        transformer.transform(usecase, paramsMap, adapter.getRequestBodyTemplate());
+    final String uri = transformer.transform(usecase, paramsMap, adapter.getUriTemplate());
     final String url =
         adapter.getProtocol() + "://" + adapter.getHostName() + ":" + adapter.getPort() + uri;
-    posterOutboundWebPort.post(adapter, url, requestBody, httpHeadersMap);
+
+    final String hashKeyjson = hashServiceUseCase.getHashKeyJson(usecase, domainEntity);
+    final String hashKey = hashServiceUseCase.generateHash(hashKeyjson);
+    posterOutboundWebPort.post(
+        usecase, hashKeyjson, hashKey, adapter, url, requestBody, httpHeadersMap);
   }
 
   private Map<String, Object> getCustomParams(

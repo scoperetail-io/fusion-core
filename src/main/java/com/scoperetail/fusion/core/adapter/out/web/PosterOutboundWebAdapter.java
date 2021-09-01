@@ -41,10 +41,15 @@ public class PosterOutboundWebAdapter implements PosterOutboundWebPort {
 
   @Override
   public void post(
+      final String usecase,
+      final String hashKeyJson,
+      final String hashKey,
       final Adapter adapter,
       final String url,
       final String requestBody,
-      final Map<String, String> httpHeaders) {
-    posterOutboundHttpAdapter.post(adapter, url, requestBody, httpHeaders);
+      final Map<String, String> httpHeaders)
+      throws Exception {
+    posterOutboundHttpAdapter.post(
+        usecase, hashKeyJson, hashKey, adapter, url, requestBody, httpHeaders);
   }
 }

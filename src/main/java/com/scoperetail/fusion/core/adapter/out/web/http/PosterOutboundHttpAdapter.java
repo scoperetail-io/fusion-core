@@ -1,7 +1,5 @@
 package com.scoperetail.fusion.core.adapter.out.web.http;
 
-import java.io.IOException;
-
 /*-
  * *****
  * fusion-core
@@ -42,16 +40,27 @@ public interface PosterOutboundHttpAdapter {
     maxAttemptsExpression = "#{${fusion.restRetryPolicy.maxAttempt}}",
     backoff = @Backoff(delayExpression = "#{${fusion.restRetryPolicy.backoffMS}}")
   )
-  void post(Adapter adapter, String url, String requestBody, Map<String, String> httpHeaders);
+  void post(
+      String usecase,
+      String hashKeyJson,
+      String hashKey,
+      Adapter adapter,
+      String url,
+      String requestBody,
+      Map<String, String> httpHeaders)
+      throws Exception;
 
   void post(HttpRequest httpRequest);
 
   @Recover
   void recover(
       RuntimeException e,
+      String usecase,
+      String hashKeyJson,
+      String hashKey,
       Adapter adapter,
       String url,
       String requestBody,
       Map<String, String> httpHeaders)
-      throws IOException;
+      throws Exception;
 }

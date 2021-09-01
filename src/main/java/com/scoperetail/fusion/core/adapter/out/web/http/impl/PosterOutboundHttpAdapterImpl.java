@@ -26,7 +26,14 @@ package com.scoperetail.fusion.core.adapter.out.web.http.impl;
  * =====
  */
 
-import java.io.IOException;
+import static com.scoperetail.fusion.config.Adapter.TransportType.JMS;
+import static com.scoperetail.fusion.config.Adapter.TransportType.REST;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.AuditType.OUT;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.COMPLETE;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.OFFLINE_RETRY_START;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.ONLINE_RETRY;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result.FAILURE;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result.SUCCESS;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -40,12 +47,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 import com.scoperetail.fusion.config.Adapter;
+import com.scoperetail.fusion.config.Adapter.TransportType;
+import com.scoperetail.fusion.config.AuditConfig;
+import com.scoperetail.fusion.config.FusionConfig;
 import com.scoperetail.fusion.core.adapter.out.web.http.PosterOutboundHttpAdapter;
-import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
+import com.scoperetail.fusion.core.application.port.in.command.AuditUseCase;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.core.common.LoggingInterceptor;
 import com.scoperetail.fusion.core.common.PerformanceCounter;
 import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterSender;
+import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
+import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
+import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEvent;
+import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,14 +68,36 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter {
   private MessageRouterSender messageSender;
+  private AuditUseCase auditUseCase;
+  private FusionConfig fusionConfig;
 
   @Override
   public void post(
+      final String usecase,
+      final String hashKeyJson,
+      final String hashKey,
       final Adapter adapter,
       final String url,
       final String requestBody,
-      final Map<String, String> httpHeaders) {
-    post(adapter.getMethodType(), url, requestBody, httpHeaders);
+      final Map<String, String> httpHeaders)
+      throws Exception {
+    Result result = FAILURE;
+    Outcome outcome = ONLINE_RETRY;
+    try {
+      post(adapter.getMethodType(), url, requestBody, httpHeaders);
+      result = SUCCESS;
+      outcome = COMPLETE;
+    } finally {
+      final HttpRequest httpRequest = buildHttpRequest(adapter, url, requestBody, httpHeaders);
+      createAudit(
+          usecase,
+          result,
+          outcome,
+          REST,
+          hashKeyJson,
+          hashKey,
+          JsonUtils.marshal(Optional.of(httpRequest)));
+    }
   }
 
   @Override
@@ -111,11 +147,14 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
   @Override
   public void recover(
       final RuntimeException exception,
+      final String usecase,
+      final String hashKeyJson,
+      final String hashKey,
       final Adapter adapter,
       final String url,
       final String requestBody,
       final Map<String, String> httpHeaders)
-      throws IOException {
+      throws Exception {
     log.error(
         "On recover after retryPost failed. message: {}, Exception was: {} ",
         requestBody,
@@ -128,13 +167,74 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
             .requestBody(requestBody)
             .httpHeaders(httpHeaders)
             .build();
+    Result result = FAILURE;
+    final Outcome outcome = OFFLINE_RETRY_START;
+    String payload = null;
+    try {
+      payload = JsonUtils.marshal(Optional.ofNullable(httpRequest));
+      messageSender.send(adapter.getBoBrokerId(), adapter.getBoQueueName(), payload);
+      result = SUCCESS;
+      log.trace(
+          "Sent Message to Broker Id:{}  Queue: {} Message: {}",
+          adapter.getBoBrokerId(),
+          adapter.getBoQueueName(),
+          payload);
+    } finally {
+      final JMSEvent jmsEvent = buildJmsEvent(adapter, payload);
+      createAudit(
+          usecase,
+          result,
+          outcome,
+          JMS,
+          hashKeyJson,
+          hashKey,
+          JsonUtils.marshal(Optional.of(jmsEvent)));
+    }
+  }
 
-    final String payload = JsonUtils.marshal(Optional.ofNullable(httpRequest));
-    messageSender.send(adapter.getBoBrokerId(), adapter.getBoQueueName(), payload);
-    log.trace(
-        "Sent Message to Broker Id:{}  Queue: {} Message: {}",
-        adapter.getBoBrokerId(),
-        adapter.getBoQueueName(),
-        payload);
+  private HttpRequest buildHttpRequest(
+      final Adapter adapter,
+      final String url,
+      final String requestBody,
+      final Map<String, String> httpHeaders) {
+    return HttpRequest.builder()
+        .url(url)
+        .methodType(adapter.getMethodType())
+        .httpHeaders(httpHeaders)
+        .requestBody(requestBody)
+        .build();
+  }
+
+  private JMSEvent buildJmsEvent(final Adapter adapter, final String payload) {
+    return JMSEvent.builder()
+        .brokerId(adapter.getBoBrokerId())
+        .queueName(adapter.getBoQueueName())
+        .payload(payload)
+        .build();
+  }
+
+  private void createAudit(
+      final String usecase,
+      final Result result,
+      final Outcome outcome,
+      final TransportType transportType,
+      final String hashKeyJson,
+      final String hashKey,
+      final String payload)
+      throws Exception {
+    final AuditConfig auditConfig = fusionConfig.getAuditConfig();
+    if (auditConfig != null && auditConfig.isEnabled()) {
+      auditUseCase.createAudit(
+          usecase,
+          result,
+          outcome,
+          transportType,
+          OUT,
+          hashKeyJson,
+          hashKey,
+          payload,
+          auditConfig.getBrokerId(),
+          auditConfig.getQueueName());
+    }
   }
 }

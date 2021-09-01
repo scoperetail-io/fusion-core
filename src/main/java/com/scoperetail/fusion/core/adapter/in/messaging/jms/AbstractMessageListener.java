@@ -28,6 +28,8 @@ package com.scoperetail.fusion.core.adapter.in.messaging.jms;
 
 import static com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult.DISCARD;
 import static com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult.SUCCESS;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.AuditType.IN;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.COMPLETE;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import java.io.ByteArrayInputStream;
@@ -42,13 +44,18 @@ import org.apache.commons.collections.CollectionUtils;
 import org.w3c.dom.Document;
 import com.scoperetail.fusion.config.Adapter;
 import com.scoperetail.fusion.config.Adapter.MessageType;
+import com.scoperetail.fusion.config.Adapter.TransportType;
+import com.scoperetail.fusion.config.AuditConfig;
 import com.scoperetail.fusion.config.FusionConfig;
+import com.scoperetail.fusion.core.application.port.in.command.AuditUseCase;
 import com.scoperetail.fusion.core.common.Event;
 import com.scoperetail.fusion.core.common.JaxbUtil;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.MessageListener;
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult;
 import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterReceiver;
+import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
+import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEvent;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -59,18 +66,29 @@ public abstract class AbstractMessageListener implements MessageListener<String>
   private final MessageType messageType;
   private final Schema schema;
   private final List<String> messageIdentifiers;
+  private final String brokerId;
+  private final String queueName;
   private final String boBrokerId;
   private final String boQueueName;
+  private final String usecase;
+  private final FusionConfig fusionConfig;
+  private final AuditUseCase auditUseCase;
 
   protected AbstractMessageListener(
       final String usecase,
       final Schema schema,
       final MessageRouterReceiver messageRouterReceiver,
-      final FusionConfig fusionConfig) {
+      final FusionConfig fusionConfig,
+      final AuditUseCase auditUseCase) {
     final Optional<Adapter> optAdapter = fusionConfig.getInboundAdapter(usecase);
     final Adapter adapter =
         optAdapter.orElseThrow(
             () -> new RuntimeException("Inbound adapter not found for usecase:" + usecase));
+    this.brokerId = adapter.getBrokerId();
+    this.queueName = adapter.getQueueName();
+    this.usecase = usecase;
+    this.auditUseCase = auditUseCase;
+    this.fusionConfig = fusionConfig;
     this.messageType = adapter.getMessageType();
     this.messageIdentifiers = adapter.getMessageIdentifiers();
     this.boBrokerId =
@@ -84,8 +102,7 @@ public abstract class AbstractMessageListener implements MessageListener<String>
             ? adapter.getReadConcurrency()
             : DEFAULT_READ_CONCURRENCY;
     this.schema = schema;
-    messageRouterReceiver.registerListener(
-        adapter.getBrokerId(), adapter.getQueueName(), readConcurrency, this);
+    messageRouterReceiver.registerListener(brokerId, queueName, readConcurrency, this);
   }
 
   @Override
@@ -106,9 +123,6 @@ public abstract class AbstractMessageListener implements MessageListener<String>
   }
 
   @Override
-  public void auditMessage(final String message) {}
-
-  @Override
   public TaskResult doTask(final String message) throws Exception {
     Object object = message;
     boolean isValid = validate(message);
@@ -122,6 +136,7 @@ public abstract class AbstractMessageListener implements MessageListener<String>
         isValid = false;
       }
       if (isValid) {
+        createAudit(object, message);
         handleMessage(object);
       }
     }
@@ -183,5 +198,23 @@ public abstract class AbstractMessageListener implements MessageListener<String>
   private Event unmarshal(final Object message) throws IOException {
     return JsonUtils.unmarshal(
         Optional.ofNullable(message.toString()), Event.class.getCanonicalName());
+  }
+
+  private void createAudit(final Object object, final String message) throws Exception {
+    final AuditConfig auditConfig = fusionConfig.getAuditConfig();
+    if (auditConfig != null && auditConfig.isEnabled()) {
+      final JMSEvent jmsEvent =
+          JMSEvent.builder().brokerId(brokerId).queueName(queueName).payload(message).build();
+      auditUseCase.createAudit(
+          usecase,
+          Result.SUCCESS,
+          COMPLETE,
+          TransportType.JMS,
+          IN,
+          object,
+          JsonUtils.marshal(Optional.of(jmsEvent)),
+          auditConfig.getBrokerId(),
+          auditConfig.getQueueName());
+    }
   }
 }
