@@ -1,9 +1,11 @@
 package com.scoperetail.fusion.core.application.port.in.command;
 
+import java.util.Set;
 import com.scoperetail.fusion.config.Adapter.TransportType;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.AuditType;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
+import com.scoperetail.fusion.shared.kernel.events.Property;
 
 /*-
  * *****
@@ -39,7 +41,7 @@ public interface AuditUseCase {
       Outcome outcome,
       TransportType transportType,
       AuditType auditType,
-      String hashKeyJson,
+      Set<Property> properties,
       String hashKey,
       String payload,
       String brokerId,

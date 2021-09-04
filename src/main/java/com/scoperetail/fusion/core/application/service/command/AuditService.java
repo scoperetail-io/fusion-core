@@ -27,9 +27,8 @@ package com.scoperetail.fusion.core.application.service.command;
  */
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Optional;
-import org.apache.commons.lang3.StringUtils;
+import java.util.Set;
 import com.scoperetail.fusion.config.Adapter.TransportType;
 import com.scoperetail.fusion.core.adapter.out.messaging.jms.PosterOutboundJMSAdapter;
 import com.scoperetail.fusion.core.application.port.in.command.AuditUseCase;
@@ -40,6 +39,7 @@ import com.scoperetail.fusion.shared.kernel.events.DomainEvent;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.AuditType;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
+import com.scoperetail.fusion.shared.kernel.events.Property;
 import lombok.AllArgsConstructor;
 
 @UseCase
@@ -55,7 +55,7 @@ public class AuditService implements AuditUseCase {
       final Outcome outcome,
       final TransportType transportType,
       final AuditType auditType,
-      final String hashKeyJson,
+      final Set<Property> properties,
       final String hashKey,
       final String payload,
       final String brokerId,
@@ -63,7 +63,7 @@ public class AuditService implements AuditUseCase {
       throws Exception {
     final DomainEvent domainEvent =
         buildDomainEvent(
-            usecase, result, outcome, transportType, auditType, hashKeyJson, hashKey, payload);
+            usecase, result, outcome, transportType, auditType, properties, hashKey, payload);
     posterOutboundJMSAdapter.post(brokerId, queueName, JsonUtils.marshal(Optional.of(domainEvent)));
   }
 
@@ -79,15 +79,15 @@ public class AuditService implements AuditUseCase {
       final String brokerId,
       final String queueName)
       throws Exception {
-    final String hashKeyJson = hashServiceUseCase.getHashKeyJson(usecase, domainEntity);
-    final String hashKey = hashServiceUseCase.generateHash(hashKeyJson);
+    final Set<Property> properties = hashServiceUseCase.getProperties(usecase, domainEntity);
+    final String hashKey = hashServiceUseCase.generateHash(properties);
     createAudit(
         usecase,
         result,
         outcome,
         transportType,
         auditType,
-        hashKeyJson,
+        properties,
         hashKey,
         payload,
         brokerId,
@@ -100,14 +100,10 @@ public class AuditService implements AuditUseCase {
       final Outcome outcome,
       final TransportType transportType,
       final AuditType auditType,
-      final String hashKeyJson,
+      final Set<Property> properties,
       final String hashKey,
       final String payload)
       throws IOException {
-    Map<String, String> keyMap = null;
-    if (StringUtils.isNotBlank(hashKeyJson)) {
-      keyMap = getkeyMap(hashKeyJson);
-    }
     return DomainEvent.builder()
         .event(event)
         .eventId(hashKey)
@@ -115,12 +111,8 @@ public class AuditService implements AuditUseCase {
         .auditType(auditType)
         .result(result)
         .outcome(outcome)
-        .keyMap(keyMap)
+        .properties(properties)
         .payload(payload)
         .build();
-  }
-
-  private Map<String, String> getkeyMap(final String keyJson) throws IOException {
-    return JsonUtils.unmarshal(Optional.of(keyJson), Map.class.getCanonicalName());
   }
 }

@@ -37,6 +37,7 @@ import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result.SUC
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -58,6 +59,7 @@ import com.scoperetail.fusion.core.common.PerformanceCounter;
 import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterSender;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
+import com.scoperetail.fusion.shared.kernel.events.Property;
 import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEvent;
 import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
 import lombok.AllArgsConstructor;
@@ -74,7 +76,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
   @Override
   public void post(
       final String usecase,
-      final String hashKeyJson,
+      final Set<Property> properties,
       final String hashKey,
       final Adapter adapter,
       final String url,
@@ -94,7 +96,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
           result,
           outcome,
           REST,
-          hashKeyJson,
+          properties,
           hashKey,
           JsonUtils.marshal(Optional.of(httpRequest)));
     }
@@ -148,7 +150,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
   public void recover(
       final RuntimeException exception,
       final String usecase,
-      final String hashKeyJson,
+      final Set<Property> properties,
       final String hashKey,
       final Adapter adapter,
       final String url,
@@ -186,7 +188,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
           result,
           outcome,
           JMS,
-          hashKeyJson,
+          properties,
           hashKey,
           JsonUtils.marshal(Optional.of(jmsEvent)));
     }
@@ -218,7 +220,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
       final Result result,
       final Outcome outcome,
       final TransportType transportType,
-      final String hashKeyJson,
+      final Set<Property> properties,
       final String hashKey,
       final String payload)
       throws Exception {
@@ -230,7 +232,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
           outcome,
           transportType,
           OUT,
-          hashKeyJson,
+          properties,
           hashKey,
           payload,
           auditConfig.getBrokerId(),

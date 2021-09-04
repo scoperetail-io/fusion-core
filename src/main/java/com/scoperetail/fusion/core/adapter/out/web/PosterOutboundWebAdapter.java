@@ -27,10 +27,12 @@ package com.scoperetail.fusion.core.adapter.out.web;
  */
 
 import java.util.Map;
+import java.util.Set;
 import com.scoperetail.fusion.config.Adapter;
 import com.scoperetail.fusion.core.adapter.out.web.http.PosterOutboundHttpAdapter;
 import com.scoperetail.fusion.core.application.port.out.web.PosterOutboundWebPort;
 import com.scoperetail.fusion.shared.kernel.common.annotation.WebAdapter;
+import com.scoperetail.fusion.shared.kernel.events.Property;
 import lombok.AllArgsConstructor;
 
 @WebAdapter
@@ -42,7 +44,7 @@ public class PosterOutboundWebAdapter implements PosterOutboundWebPort {
   @Override
   public void post(
       final String usecase,
-      final String hashKeyJson,
+      final Set<Property> properties,
       final String hashKey,
       final Adapter adapter,
       final String url,
@@ -50,6 +52,6 @@ public class PosterOutboundWebAdapter implements PosterOutboundWebPort {
       final Map<String, String> httpHeaders)
       throws Exception {
     posterOutboundHttpAdapter.post(
-        usecase, hashKeyJson, hashKey, adapter, url, requestBody, httpHeaders);
+        usecase, properties, hashKey, adapter, url, requestBody, httpHeaders);
   }
 }

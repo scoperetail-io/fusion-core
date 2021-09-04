@@ -1,5 +1,8 @@
 package com.scoperetail.fusion.core.application.port.in.command;
 
+import java.util.Set;
+import com.scoperetail.fusion.shared.kernel.events.Property;
+
 /*-
  * *****
  * fusion-core
@@ -28,9 +31,9 @@ package com.scoperetail.fusion.core.application.port.in.command;
 
 public interface HashServiceUseCase {
 
-  String getHashKeyJson(final String usecase, final Object domainEntity) throws Exception;
+  Set<Property> getProperties(final String usecase, final Object domainEntity) throws Exception;
 
-  String generateHash(String hashKeyJson);
+  String generateHash(Set<Property> properties);
 
   String generateHash(String usecase, Object domainEntity) throws Exception;
 }

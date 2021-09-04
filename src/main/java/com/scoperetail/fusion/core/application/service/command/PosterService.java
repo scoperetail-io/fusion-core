@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.MapUtils;
 import org.springframework.util.ResourceUtils;
@@ -60,8 +61,6 @@ import com.scoperetail.fusion.core.application.port.out.mail.MailDetailsDto;
 import com.scoperetail.fusion.core.application.port.out.mail.PosterOutboundMailPort;
 import com.scoperetail.fusion.core.application.port.out.web.PosterOutboundWebPort;
 import com.scoperetail.fusion.core.application.service.transform.Transformer;
-import com.scoperetail.fusion.core.application.service.transform.impl.DomainToDomainEventJsonFtlTransformer;
-import com.scoperetail.fusion.core.application.service.transform.impl.DomainToDomainEventJsonVelocityTransformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToFtlTemplateTransformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToStringTransformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToVelocityTemplateTransformer;
@@ -69,6 +68,7 @@ import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
+import com.scoperetail.fusion.shared.kernel.events.Property;
 import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEvent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -84,11 +84,6 @@ class PosterService implements PosterUseCase {
   private final PosterOutboundKafkaPort posterOutboundKafkaPort;
 
   private final PosterOutboundWebPort posterOutboundWebPort;
-
-  private final DomainToDomainEventJsonVelocityTransformer
-      domainToDomainEventJsonVelocityTransformer;
-
-  private final DomainToDomainEventJsonFtlTransformer domainToDomainEventJsonFtlTransformer;
 
   private final DomainToFtlTemplateTransformer domainToFtlTemplateTransformer;
 
@@ -154,12 +149,6 @@ class PosterService implements PosterUseCase {
   private Transformer getTransformer(final TransformationType transformationType) {
     Transformer transformer;
     switch (transformationType) {
-      case DOMAIN_EVENT_FTL_TRANSFORMER:
-        transformer = domainToDomainEventJsonFtlTransformer;
-        break;
-      case DOMAIN_EVENT_VELOCITY_TRANSFORMER:
-        transformer = domainToDomainEventJsonVelocityTransformer;
-        break;
       case FTL_TEMPLATE_TRANSFORMER:
         transformer = domainToFtlTemplateTransformer;
         break;
@@ -242,10 +231,10 @@ class PosterService implements PosterUseCase {
     final String url =
         adapter.getProtocol() + "://" + adapter.getHostName() + ":" + adapter.getPort() + uri;
 
-    final String hashKeyjson = hashServiceUseCase.getHashKeyJson(usecase, domainEntity);
-    final String hashKey = hashServiceUseCase.generateHash(hashKeyjson);
+    final Set<Property> properties = hashServiceUseCase.getProperties(usecase, domainEntity);
+    final String hashKey = hashServiceUseCase.generateHash(properties);
     posterOutboundWebPort.post(
-        usecase, hashKeyjson, hashKey, adapter, url, requestBody, httpHeadersMap);
+        usecase, properties, hashKey, adapter, url, requestBody, httpHeadersMap);
   }
 
   private Map<String, Object> getCustomParams(

@@ -27,10 +27,12 @@ package com.scoperetail.fusion.core.adapter.out.web.http;
  */
 
 import java.util.Map;
+import java.util.Set;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import com.scoperetail.fusion.config.Adapter;
+import com.scoperetail.fusion.shared.kernel.events.Property;
 import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
 
 public interface PosterOutboundHttpAdapter {
@@ -42,7 +44,7 @@ public interface PosterOutboundHttpAdapter {
   )
   void post(
       String usecase,
-      String hashKeyJson,
+      Set<Property> properties,
       String hashKey,
       Adapter adapter,
       String url,
@@ -56,7 +58,7 @@ public interface PosterOutboundHttpAdapter {
   void recover(
       RuntimeException e,
       String usecase,
-      String hashKeyJson,
+      Set<Property> properties,
       String hashKey,
       Adapter adapter,
       String url,

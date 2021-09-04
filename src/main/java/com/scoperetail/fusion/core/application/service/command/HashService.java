@@ -1,5 +1,7 @@
 package com.scoperetail.fusion.core.application.service.command;
 
+import java.io.IOException;
+
 /*-
  * *****
  * fusion-core
@@ -29,6 +31,9 @@ package com.scoperetail.fusion.core.application.service.command;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.scoperetail.fusion.config.FusionConfig;
 import com.scoperetail.fusion.config.UseCaseConfig;
 import com.scoperetail.fusion.core.application.port.in.command.HashServiceUseCase;
@@ -36,19 +41,24 @@ import com.scoperetail.fusion.core.application.service.transform.Transformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToHashKeyJsonFtlTemplateTransformer;
 import com.scoperetail.fusion.core.application.service.transform.impl.DomainToHashKeyJsonVelocityTemplateTransformer;
 import com.scoperetail.fusion.core.common.HashUtil;
+import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
+import com.scoperetail.fusion.shared.kernel.events.Property;
 import lombok.AllArgsConstructor;
 
 @UseCase
 @AllArgsConstructor
 public class HashService implements HashServiceUseCase {
+  private static final String EQUALS = "=";
+  private static final String SEMICOLON = ";";
   private FusionConfig fusionConfig;
   private DomainToHashKeyJsonFtlTemplateTransformer hashKeyFtlTemplateTransformer;
   private DomainToHashKeyJsonVelocityTemplateTransformer hashKeyVelocityTemplateTransformer;
 
   @Override
-  public String getHashKeyJson(final String usecase, final Object domainEntity) throws Exception {
-    String hashKeyJson = null;
+  public Set<Property> getProperties(final String usecase, final Object domainEntity)
+      throws Exception {
+    Set<Property> properties = null;
     final Optional<UseCaseConfig> optUseCase = fusionConfig.getUsecase(usecase);
     if (optUseCase.isPresent()) {
       final UseCaseConfig useCase = optUseCase.get();
@@ -57,19 +67,28 @@ public class HashService implements HashServiceUseCase {
 
       final Map<String, Object> paramsMap = new HashMap<>();
       paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
-      hashKeyJson = transformer.transform(usecase, paramsMap, templateName);
+      final String hashKeyJson = transformer.transform(usecase, paramsMap, templateName);
+      properties = getProperties(hashKeyJson);
     }
-    return hashKeyJson;
+    return properties;
   }
 
   @Override
-  public String generateHash(final String hashKeyJson) {
-    return HashUtil.getHash(hashKeyJson, HashUtil.SHA3_512);
+  public String generateHash(final Set<Property> properties) {
+    final StringBuilder hashKeyBuilder = new StringBuilder();
+    properties.forEach(
+        property -> {
+          hashKeyBuilder.append(property.getKey());
+          hashKeyBuilder.append(EQUALS);
+          hashKeyBuilder.append(property.getValue());
+          hashKeyBuilder.append(SEMICOLON);
+        });
+    return HashUtil.getHash(hashKeyBuilder.toString(), HashUtil.SHA3_512);
   }
 
   @Override
   public String generateHash(final String usecase, final Object domainEntity) throws Exception {
-    return generateHash(getHashKeyJson(usecase, domainEntity));
+    return generateHash(getProperties(usecase, domainEntity));
   }
 
   private Transformer getTransformer(
@@ -82,5 +101,17 @@ public class HashService implements HashServiceUseCase {
       transformer = hashKeyFtlTemplateTransformer;
     }
     return transformer;
+  }
+
+  public Set<Property> getProperties(final String hashKeyJson) throws IOException {
+    final Set<Property> properties =
+        JsonUtils.unmarshal(
+            Optional.of(hashKeyJson), Optional.of(new TypeReference<TreeSet<Property>>() {}));
+    properties.forEach(
+        u -> {
+          u.setKey(u.getKey().trim());
+          u.setValue(u.getValue().trim());
+        });
+    return properties;
   }
 }
