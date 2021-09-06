@@ -42,6 +42,7 @@ import org.springframework.web.client.RestTemplate;
 import com.scoperetail.fusion.config.Adapter;
 import com.scoperetail.fusion.core.adapter.out.web.http.PosterOutboundHttpAdapter;
 import com.scoperetail.fusion.core.common.HttpRequest;
+import com.scoperetail.fusion.core.common.HttpRequestWrapper;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.core.common.LoggingInterceptor;
 import com.scoperetail.fusion.core.common.PerformanceCounter;
@@ -128,8 +129,12 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
             .requestBody(requestBody)
             .httpHeaders(httpHeaders)
             .build();
-
-    final String payload = JsonUtils.marshal(Optional.ofNullable(httpRequest));
+    final HttpRequestWrapper httpRequestWrapper =
+        HttpRequestWrapper.builder()
+            .httpRequest(httpRequest)
+            .retryCustomizers(adapter.getRetryCustomizers())
+            .build();
+    final String payload = JsonUtils.marshal(Optional.ofNullable(httpRequestWrapper));
     messageSender.send(adapter.getBoBrokerId(), adapter.getBoQueueName(), payload);
     log.trace(
         "Sent Message to Broker Id:{}  Queue: {} Message: {}",
