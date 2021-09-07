@@ -62,6 +62,7 @@ import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
 import com.scoperetail.fusion.shared.kernel.events.Property;
 import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEvent;
 import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
+import com.scoperetail.fusion.shared.kernel.web.request.HttpRequestWrapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -161,19 +162,13 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
         "On recover after retryPost failed. message: {}, Exception was: {} ",
         requestBody,
         exception.getMessage());
-
-    final HttpRequest httpRequest =
-        HttpRequest.builder()
-            .url(url)
-            .methodType(adapter.getMethodType())
-            .requestBody(requestBody)
-            .httpHeaders(httpHeaders)
-            .build();
     Result result = FAILURE;
     final Outcome outcome = OFFLINE_RETRY_START;
     String payload = null;
     try {
-      payload = JsonUtils.marshal(Optional.ofNullable(httpRequest));
+      final HttpRequest httpRequest = buildHttpRequest(adapter, url, requestBody, httpHeaders);
+      final HttpRequestWrapper httpRequestWrapper = buildHttpRequestWrapper(adapter, httpRequest);
+      payload = JsonUtils.marshal(Optional.ofNullable(httpRequestWrapper));
       messageSender.send(adapter.getBoBrokerId(), adapter.getBoQueueName(), payload);
       result = SUCCESS;
       log.trace(
@@ -192,6 +187,14 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
           hashKey,
           JsonUtils.marshal(Optional.of(jmsEvent)));
     }
+  }
+
+  private HttpRequestWrapper buildHttpRequestWrapper(
+      final Adapter adapter, final HttpRequest httpRequest) {
+    return HttpRequestWrapper.builder()
+        .httpRequest(httpRequest)
+        .retryCustomizers(adapter.getRetryCustomizers())
+        .build();
   }
 
   private HttpRequest buildHttpRequest(
