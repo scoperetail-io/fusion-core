@@ -1,4 +1,11 @@
-package com.scoperetail.fusion.core.application.service.transform.impl;
+package com.scoperetail.fusion.core.application.port.in.command;
+
+import java.util.Set;
+import com.scoperetail.fusion.config.Adapter.TransportType;
+import com.scoperetail.fusion.shared.kernel.events.DomainEvent.AuditType;
+import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
+import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
+import com.scoperetail.fusion.shared.kernel.events.DomainProperty;
 
 /*-
  * *****
@@ -12,10 +19,10 @@ package com.scoperetail.fusion.core.application.service.transform.impl;
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,14 +33,30 @@ package com.scoperetail.fusion.core.application.service.transform.impl;
  * =====
  */
 
-import org.springframework.stereotype.Component;
-import com.scoperetail.fusion.core.application.service.transform.template.engine.FreemarkerTemplateEngine;
+public interface AuditUseCase {
 
-@Component
-public class DomainToDomainEventJsonFtlTransformer
-    extends AbstractDomainToDomainEventJsonTransformer {
+  void createAudit(
+      String usecase,
+      Result result,
+      Outcome outcome,
+      TransportType transportType,
+      AuditType auditType,
+      Set<DomainProperty> properties,
+      String hashKey,
+      String payload,
+      String brokerId,
+      String queueName)
+      throws Exception;
 
-  public DomainToDomainEventJsonFtlTransformer(final FreemarkerTemplateEngine templateEngine) {
-    super(templateEngine);
-  }
+  void createAudit(
+      String usecase,
+      Result result,
+      Outcome outcome,
+      TransportType transportType,
+      AuditType auditType,
+      Object domainEntity,
+      String payload,
+      String brokerId,
+      String queueName)
+      throws Exception;
 }

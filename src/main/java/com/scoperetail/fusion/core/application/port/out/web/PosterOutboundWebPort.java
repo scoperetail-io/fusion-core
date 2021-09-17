@@ -27,9 +27,19 @@ package com.scoperetail.fusion.core.application.port.out.web;
  */
 
 import java.util.Map;
+import java.util.Set;
 import com.scoperetail.fusion.config.Adapter;
+import com.scoperetail.fusion.shared.kernel.events.DomainProperty;
 
 public interface PosterOutboundWebPort {
 
-  void post(Adapter adapter, String url, String requestBody, Map<String, String> httpHeaders);
+  void post(
+      String usecase,
+      Set<DomainProperty> properties,
+      String hashKey,
+      Adapter adapter,
+      String url,
+      String requestBody,
+      Map<String, String> httpHeaders)
+      throws Exception;
 }

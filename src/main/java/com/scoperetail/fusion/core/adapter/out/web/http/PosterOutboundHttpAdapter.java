@@ -1,7 +1,5 @@
 package com.scoperetail.fusion.core.adapter.out.web.http;
 
-import java.io.IOException;
-
 /*-
  * *****
  * fusion-core
@@ -29,11 +27,13 @@ import java.io.IOException;
  */
 
 import java.util.Map;
+import java.util.Set;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import com.scoperetail.fusion.config.Adapter;
-import com.scoperetail.fusion.core.common.HttpRequest;
+import com.scoperetail.fusion.shared.kernel.events.DomainProperty;
+import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
 
 public interface PosterOutboundHttpAdapter {
 
@@ -42,16 +42,27 @@ public interface PosterOutboundHttpAdapter {
     maxAttemptsExpression = "#{${fusion.restRetryPolicy.maxAttempt}}",
     backoff = @Backoff(delayExpression = "#{${fusion.restRetryPolicy.backoffMS}}")
   )
-  void post(Adapter adapter, String url, String requestBody, Map<String, String> httpHeaders);
+  void post(
+      String usecase,
+      Set<DomainProperty> properties,
+      String hashKey,
+      Adapter adapter,
+      String url,
+      String requestBody,
+      Map<String, String> httpHeaders)
+      throws Exception;
 
   void post(HttpRequest httpRequest);
 
   @Recover
   void recover(
       RuntimeException e,
+      String usecase,
+      Set<DomainProperty> properties,
+      String hashKey,
       Adapter adapter,
       String url,
       String requestBody,
       Map<String, String> httpHeaders)
-      throws IOException;
+      throws Exception;
 }
