@@ -43,7 +43,7 @@ import com.scoperetail.fusion.core.application.service.transform.impl.DomainToHa
 import com.scoperetail.fusion.core.common.HashUtil;
 import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
-import com.scoperetail.fusion.shared.kernel.events.Property;
+import com.scoperetail.fusion.shared.kernel.events.DomainProperty;
 import lombok.AllArgsConstructor;
 
 @UseCase
@@ -56,9 +56,9 @@ public class HashService implements HashServiceUseCase {
   private DomainToHashKeyJsonVelocityTemplateTransformer hashKeyVelocityTemplateTransformer;
 
   @Override
-  public Set<Property> getProperties(final String usecase, final Object domainEntity)
+  public Set<DomainProperty> getProperties(final String usecase, final Object domainEntity)
       throws Exception {
-    Set<Property> properties = null;
+    Set<DomainProperty> properties = null;
     final Optional<UseCaseConfig> optUseCase = fusionConfig.getUsecase(usecase);
     if (optUseCase.isPresent()) {
       final UseCaseConfig useCase = optUseCase.get();
@@ -74,11 +74,11 @@ public class HashService implements HashServiceUseCase {
   }
 
   @Override
-  public String generateHash(final Set<Property> properties) {
+  public String generateHash(final Set<DomainProperty> properties) {
     final StringBuilder hashKeyBuilder = new StringBuilder();
     properties.forEach(
         property -> {
-          hashKeyBuilder.append(property.getKey());
+          hashKeyBuilder.append(property.getName());
           hashKeyBuilder.append(EQUALS);
           hashKeyBuilder.append(property.getValue());
           hashKeyBuilder.append(SEMICOLON);
@@ -103,13 +103,13 @@ public class HashService implements HashServiceUseCase {
     return transformer;
   }
 
-  public Set<Property> getProperties(final String hashKeyJson) throws IOException {
-    final Set<Property> properties =
+  public Set<DomainProperty> getProperties(final String hashKeyJson) throws IOException {
+    final Set<DomainProperty> properties =
         JsonUtils.unmarshal(
-            Optional.of(hashKeyJson), Optional.of(new TypeReference<TreeSet<Property>>() {}));
+            Optional.of(hashKeyJson), Optional.of(new TypeReference<TreeSet<DomainProperty>>() {}));
     properties.forEach(
         u -> {
-          u.setKey(u.getKey().trim());
+          u.setName(u.getName().trim());
           u.setValue(u.getValue().trim());
         });
     return properties;

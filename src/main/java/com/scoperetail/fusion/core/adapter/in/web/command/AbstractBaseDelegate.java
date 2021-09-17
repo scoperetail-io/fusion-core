@@ -75,8 +75,8 @@ public abstract class AbstractBaseDelegate {
           IN,
           domainEntity,
           JsonUtils.marshal(Optional.ofNullable(httpRequestHelper.buildHttpRequest())),
-          auditConfig.getBrokerId(),
-          auditConfig.getQueueName());
+          auditConfig.getTargetBrokerId(),
+          auditConfig.getTargetQueueName());
     }
   }
 

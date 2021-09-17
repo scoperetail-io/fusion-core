@@ -1,7 +1,7 @@
 package com.scoperetail.fusion.core.application.port.in.command;
 
 import java.util.Set;
-import com.scoperetail.fusion.shared.kernel.events.Property;
+import com.scoperetail.fusion.shared.kernel.events.DomainProperty;
 
 /*-
  * *****
@@ -31,9 +31,9 @@ import com.scoperetail.fusion.shared.kernel.events.Property;
 
 public interface HashServiceUseCase {
 
-  Set<Property> getProperties(final String usecase, final Object domainEntity) throws Exception;
+  Set<DomainProperty> getProperties(final String usecase, final Object domainEntity) throws Exception;
 
-  String generateHash(Set<Property> properties);
+  String generateHash(Set<DomainProperty> properties);
 
   String generateHash(String usecase, Object domainEntity) throws Exception;
 }

@@ -55,7 +55,7 @@ import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.MessageListener
 import com.scoperetail.fusion.messaging.adapter.in.messaging.jms.TaskResult;
 import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterReceiver;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
-import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEvent;
+import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEventWrapper;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -203,8 +203,12 @@ public abstract class AbstractMessageListener implements MessageListener<String>
   private void createAudit(final Object object, final String message) throws Exception {
     final AuditConfig auditConfig = fusionConfig.getAuditConfig();
     if (auditConfig != null && auditConfig.isEnabled()) {
-      final JMSEvent jmsEvent =
-          JMSEvent.builder().brokerId(brokerId).queueName(queueName).payload(message).build();
+      final JMSEventWrapper jmsEvent =
+          JMSEventWrapper.builder()
+              .brokerId(brokerId)
+              .queueName(queueName)
+              .payload(message)
+              .build();
       auditUseCase.createAudit(
           usecase,
           Result.SUCCESS,
@@ -213,8 +217,8 @@ public abstract class AbstractMessageListener implements MessageListener<String>
           IN,
           object,
           JsonUtils.marshal(Optional.of(jmsEvent)),
-          auditConfig.getBrokerId(),
-          auditConfig.getQueueName());
+          auditConfig.getTargetBrokerId(),
+          auditConfig.getTargetQueueName());
     }
   }
 }

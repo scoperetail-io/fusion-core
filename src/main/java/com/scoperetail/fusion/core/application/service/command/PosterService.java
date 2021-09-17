@@ -5,7 +5,7 @@ import static com.scoperetail.fusion.config.Adapter.UsecaseResult.FAILURE;
 import static com.scoperetail.fusion.config.Adapter.UsecaseResult.SUCCESS;
 import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.AuditType.OUT;
 import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.COMPLETE;
-import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.ONLINE_RETRY;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.ONLINE_RETRY_START;
 /*-
  * *****
  * fusion-core
@@ -68,8 +68,8 @@ import com.scoperetail.fusion.core.common.JsonUtils;
 import com.scoperetail.fusion.shared.kernel.common.annotation.UseCase;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
-import com.scoperetail.fusion.shared.kernel.events.Property;
-import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEvent;
+import com.scoperetail.fusion.shared.kernel.events.DomainProperty;
+import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEventWrapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -170,7 +170,7 @@ class PosterService implements PosterUseCase {
       throws Exception {
     String payload = null;
     Result result = Result.FAILURE;
-    Outcome outcome = ONLINE_RETRY;
+    Outcome outcome = ONLINE_RETRY_START;
     try {
       final Map<String, Object> paramsMap = new HashMap<>();
       paramsMap.put(Transformer.DOMAIN_ENTITY, domainEntity);
@@ -193,8 +193,8 @@ class PosterService implements PosterUseCase {
       throws Exception {
     final AuditConfig auditConfig = fusionConfig.getAuditConfig();
     if (auditConfig != null && auditConfig.isEnabled()) {
-      final JMSEvent jmsEvent =
-          JMSEvent.builder()
+      final JMSEventWrapper jmsEvent =
+          JMSEventWrapper.builder()
               .brokerId(adapter.getBrokerId())
               .queueName(adapter.getQueueName())
               .payload(payload)
@@ -207,8 +207,8 @@ class PosterService implements PosterUseCase {
           OUT,
           domainEntity,
           JsonUtils.marshal(Optional.of(jmsEvent)),
-          auditConfig.getBrokerId(),
-          auditConfig.getQueueName());
+          auditConfig.getTargetBrokerId(),
+          auditConfig.getTargetQueueName());
     }
   }
 
@@ -231,7 +231,7 @@ class PosterService implements PosterUseCase {
     final String url =
         adapter.getProtocol() + "://" + adapter.getHostName() + ":" + adapter.getPort() + uri;
 
-    final Set<Property> properties = hashServiceUseCase.getProperties(usecase, domainEntity);
+    final Set<DomainProperty> properties = hashServiceUseCase.getProperties(usecase, domainEntity);
     final String hashKey = hashServiceUseCase.generateHash(properties);
     posterOutboundWebPort.post(
         usecase, properties, hashKey, adapter, url, requestBody, httpHeadersMap);

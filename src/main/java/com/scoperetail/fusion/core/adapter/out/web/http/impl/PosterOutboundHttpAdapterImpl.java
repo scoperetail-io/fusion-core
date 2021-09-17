@@ -31,7 +31,8 @@ import static com.scoperetail.fusion.config.Adapter.TransportType.REST;
 import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.AuditType.OUT;
 import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.COMPLETE;
 import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.OFFLINE_RETRY_START;
-import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.ONLINE_RETRY;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.ONLINE_RETRY_IN_PROGRESS;
+import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome.ONLINE_RETRY_START;
 import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result.FAILURE;
 import static com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result.SUCCESS;
 import java.util.Collections;
@@ -44,6 +45,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.retry.support.RetrySynchronizationManager;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
@@ -59,8 +61,8 @@ import com.scoperetail.fusion.core.common.PerformanceCounter;
 import com.scoperetail.fusion.messaging.adapter.out.messaging.jms.MessageRouterSender;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
-import com.scoperetail.fusion.shared.kernel.events.Property;
-import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEvent;
+import com.scoperetail.fusion.shared.kernel.events.DomainProperty;
+import com.scoperetail.fusion.shared.kernel.messaging.jms.JMSEventWrapper;
 import com.scoperetail.fusion.shared.kernel.web.request.HttpRequest;
 import com.scoperetail.fusion.shared.kernel.web.request.HttpRequestWrapper;
 import lombok.AllArgsConstructor;
@@ -77,15 +79,16 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
   @Override
   public void post(
       final String usecase,
-      final Set<Property> properties,
+      final Set<DomainProperty> properties,
       final String hashKey,
       final Adapter adapter,
       final String url,
       final String requestBody,
       final Map<String, String> httpHeaders)
       throws Exception {
+    final int retryCount = RetrySynchronizationManager.getContext().getRetryCount();
     Result result = FAILURE;
-    Outcome outcome = ONLINE_RETRY;
+    Outcome outcome = retryCount == 0 ? ONLINE_RETRY_START : ONLINE_RETRY_IN_PROGRESS;
     try {
       post(adapter.getMethodType(), url, requestBody, httpHeaders);
       result = SUCCESS;
@@ -151,7 +154,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
   public void recover(
       final RuntimeException exception,
       final String usecase,
-      final Set<Property> properties,
+      final Set<DomainProperty> properties,
       final String hashKey,
       final Adapter adapter,
       final String url,
@@ -177,7 +180,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
           adapter.getBoQueueName(),
           payload);
     } finally {
-      final JMSEvent jmsEvent = buildJmsEvent(adapter, payload);
+      final JMSEventWrapper jmsEvent = buildJmsEvent(adapter, payload);
       createAudit(
           usecase,
           result,
@@ -210,8 +213,8 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
         .build();
   }
 
-  private JMSEvent buildJmsEvent(final Adapter adapter, final String payload) {
-    return JMSEvent.builder()
+  private JMSEventWrapper buildJmsEvent(final Adapter adapter, final String payload) {
+    return JMSEventWrapper.builder()
         .brokerId(adapter.getBoBrokerId())
         .queueName(adapter.getBoQueueName())
         .payload(payload)
@@ -223,7 +226,7 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
       final Result result,
       final Outcome outcome,
       final TransportType transportType,
-      final Set<Property> properties,
+      final Set<DomainProperty> properties,
       final String hashKey,
       final String payload)
       throws Exception {
@@ -238,8 +241,8 @@ public class PosterOutboundHttpAdapterImpl implements PosterOutboundHttpAdapter 
           properties,
           hashKey,
           payload,
-          auditConfig.getBrokerId(),
-          auditConfig.getQueueName());
+          auditConfig.getTargetBrokerId(),
+          auditConfig.getTargetQueueName());
     }
   }
 }

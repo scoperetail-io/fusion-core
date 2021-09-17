@@ -39,7 +39,7 @@ import com.scoperetail.fusion.shared.kernel.events.DomainEvent;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.AuditType;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Outcome;
 import com.scoperetail.fusion.shared.kernel.events.DomainEvent.Result;
-import com.scoperetail.fusion.shared.kernel.events.Property;
+import com.scoperetail.fusion.shared.kernel.events.DomainProperty;
 import lombok.AllArgsConstructor;
 
 @UseCase
@@ -55,7 +55,7 @@ public class AuditService implements AuditUseCase {
       final Outcome outcome,
       final TransportType transportType,
       final AuditType auditType,
-      final Set<Property> properties,
+      final Set<DomainProperty> properties,
       final String hashKey,
       final String payload,
       final String brokerId,
@@ -79,7 +79,7 @@ public class AuditService implements AuditUseCase {
       final String brokerId,
       final String queueName)
       throws Exception {
-    final Set<Property> properties = hashServiceUseCase.getProperties(usecase, domainEntity);
+    final Set<DomainProperty> properties = hashServiceUseCase.getProperties(usecase, domainEntity);
     final String hashKey = hashServiceUseCase.generateHash(properties);
     createAudit(
         usecase,
@@ -100,7 +100,7 @@ public class AuditService implements AuditUseCase {
       final Outcome outcome,
       final TransportType transportType,
       final AuditType auditType,
-      final Set<Property> properties,
+      final Set<DomainProperty> domainProperties,
       final String hashKey,
       final String payload)
       throws IOException {
@@ -111,7 +111,7 @@ public class AuditService implements AuditUseCase {
         .auditType(auditType)
         .result(result)
         .outcome(outcome)
-        .properties(properties)
+        .domainProperties(domainProperties)
         .payload(payload)
         .build();
   }
