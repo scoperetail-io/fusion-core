@@ -41,7 +41,7 @@
 	
 	<properties>
 		<httpclient.version>4.5.13</httpclient.version>
-		<spring.version>2.4.5</spring.version>
+		<spring.version>2.5.12</spring.version>
 		<fusion-shared-kernel.version>0.7</fusion-shared-kernel.version>
 		<fusion-config.version>0.6</fusion-config.version>
 		<fusion-messaging.version>0.13</fusion-messaging.version>
